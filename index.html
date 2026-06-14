@@ -928,6 +928,8 @@ async function showAdmin(key){
     const rows=r.couples||[]; adminRows=rows;
     c.innerHTML=`<div class="kicker">Admin · master view</div><h2>All couples (${rows.length})</h2>
       <p class="lead">Everyone who has signed up. Open a couple's planner with their link, or remove a couple.</p>
+      <div class="field" style="margin-bottom:16px"><label class="fl">📣 Public signup link — share this with couples</label>
+        <input type="text" readonly value="${esc(location.origin+location.pathname)}" onclick="this.select()" style="font-weight:600"></div>
       <table><thead><tr><th>Couple</th><th>Wedding date</th><th>Signed up</th><th style="text-align:center">Guests</th><th>Planner link</th><th></th></tr></thead>
       <tbody>${rows.length?rows.map(x=>{ const lnk=x.token?(location.origin+location.pathname+"#w="+x.token):""; return `<tr>
         <td>👰 ${esc(x.bride_name||"—")} 💕 ${esc(x.groom_name||"—")} 🤵</td>
