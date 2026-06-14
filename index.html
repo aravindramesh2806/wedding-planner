@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Planner</title>
+<style>
+  :root{
+    --accent:#b76e79;        /* default: dusty rose */
+    --accent-soft:#f3e0e3;
+    --accent-dark:#8f4f59;
+    --bg:#faf7f5;
+    --card:#ffffff;
+    --text:#2c2622;
+    --muted:#8a817c;
+    --line:#ece6e2;
+    --good:#3f9d6d;
+    --warn:#d9893c;
+    --bad:#cf5b5b;
+    --radius:14px;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--text)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px 80px}
+
+  /* Header */
+  header.top{
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);
+    color:#fff;padding:34px 20px 30px;text-align:center;position:relative;
+  }
+  header.top .names{font-size:30px;font-weight:700;letter-spacing:.01em}
+  header.top .sub{opacity:.92;margin-top:4px;font-size:14px}
+  .countdown{display:flex;gap:14px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+  .cd-box{background:rgba(255,255,255,.16);backdrop-filter:blur(4px);border-radius:12px;padding:10px 16px;min-width:74px}
+  .cd-num{font-size:26px;font-weight:700;line-height:1}
+  .cd-lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-top:4px}
+  .gear{position:absolute;top:16px;right:18px;color:#fff;font-size:20px;opacity:.85;background:rgba(255,255,255,.14);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .gear:hover{opacity:1}
+
+  /* Tabs */
+  nav.tabs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;background:var(--card);
+    margin:0 auto;padding:8px;border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow);
+    position:sticky;top:0;z-index:20;max-width:1040px}
+  .tab{padding:9px 16px;border-radius:9px;font-size:14px;font-weight:550;color:var(--muted);white-space:nowrap}
+  .tab:hover{background:var(--accent-soft);color:var(--accent-dark)}
+  .tab.active{background:var(--accent);color:#fff}
+
+  /* Cards & layout */
+  .panel{display:none;margin-top:26px}
+  .panel.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .grid{display:grid;gap:16px}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+  .card h2{font-size:17px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .stat{font-size:30px;font-weight:700;color:var(--accent-dark)}
+  .stat-lab{font-size:13px;color:var(--muted);margin-top:2px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+  .section-head h2{font-size:22px}
+  .muted{color:var(--muted)}
+  .pill{font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600;display:inline-block}
+
+  /* Buttons */
+  .btn{background:var(--accent);color:#fff;padding:9px 16px;border-radius:9px;font-weight:600;font-size:14px;transition:background .15s}
+  .btn:hover{background:var(--accent-dark)}
+  .btn.ghost{background:var(--accent-soft);color:var(--accent-dark)}
+  .btn.ghost:hover{background:#e9cdd2}
+  .btn.sm{padding:6px 11px;font-size:13px}
+  .icon-btn{color:var(--muted);font-size:15px;padding:4px 7px;border-radius:7px}
+  .icon-btn:hover{background:var(--accent-soft);color:var(--accent-dark)}
+
+  /* Forms / inline add */
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;width:100%;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  label.fl{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px}
+
+  /* Progress bars */
+  .bar{height:9px;background:var(--accent-soft);border-radius:999px;overflow:hidden}
+  .bar > span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .4s}
+  .bar.over > span{background:var(--bad)}
+
+  /* Lists */
+  .list{display:flex;flex-direction:column}
+  .item{display:flex;align-items:center;gap:12px;padding:12px 6px;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item.done .item-title{text-decoration:line-through;color:var(--muted)}
+  .check{width:21px;height:21px;border:2px solid var(--accent);border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;transition:.15s}
+  .check.on{background:var(--accent)}
+  .item-title{flex:1;font-size:15px}
+  .item-meta{font-size:12px;color:var(--muted)}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);font-size:14px}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  td .mini{font-size:12px;color:var(--muted)}
+
+  /* Event blocks */
+  .event{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .event-head{padding:16px 20px;display:flex;align-items:center;gap:14px;border-left:5px solid var(--accent)}
+  .event-head .et{font-size:17px;font-weight:650}
+  .event-body{padding:4px 20px 16px}
+  .empty{text-align:center;color:var(--muted);padding:36px 12px;font-size:14px}
+  .empty .big{font-size:34px;margin-bottom:8px}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(20,15,15,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:16px;max-width:440px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow:auto}
+  .modal h3{font-size:18px;margin-bottom:16px}
+  .modal .field{margin-bottom:13px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+
+  /* Theme swatches */
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .sw{width:38px;height:38px;border-radius:50%;cursor:pointer;border:3px solid transparent;position:relative}
+  .sw.sel{border-color:var(--text)}
+  .sw.sel::after{content:"\2713";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700}
+
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600}
+  .t-yes{background:#e2f3ea;color:var(--good)}
+  .t-no{background:#fbe5e5;color:var(--bad)}
+  .t-maybe{background:#fdf0df;color:var(--warn)}
+  .t-pending{background:#eee9e6;color:var(--muted)}
+  .topbtns{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .footnote{text-align:center;color:var(--muted);font-size:12px;margin-top:40px}
+
+  /* Full-screen onboarding / lock */
+  .fs{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,var(--accent) 0%,var(--accent-dark) 100%);
+    display:none;align-items:center;justify-content:center;padding:24px;overflow:auto}
+  .fs.show{display:flex}
+  .fs-card{background:var(--card);border-radius:22px;max-width:460px;width:100%;padding:34px;
+    box-shadow:0 30px 90px rgba(0,0,0,.32);animation:pop .3s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .fs-card .kicker{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .fs-card h2{font-size:25px;margin:6px 0 6px}
+  .fs-card .lead{color:var(--muted);margin-bottom:22px;font-size:15px}
+  .fs-card .field{margin-bottom:14px}
+  .dots{display:flex;gap:6px;margin-bottom:20px}
+  .dots .d{width:7px;height:7px;border-radius:999px;background:var(--line);transition:.25s}
+  .dots .d.on{background:var(--accent);width:22px}
+  .fs-actions{display:flex;gap:10px;margin-top:8px}
+  .fs-actions .btn{flex:1;justify-content:center;text-align:center;padding:12px}
+  .heart-badge{width:62px;height:62px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:14px}
+  .pin-in{letter-spacing:.55em;text-align:center;font-size:22px;font-weight:700;padding:12px}
+  .profiles{display:flex;gap:14px;margin-top:4px}
+  .profile{flex:1;border:2px solid var(--line);border-radius:16px;padding:20px 12px;text-align:center;cursor:pointer;transition:.15s;background:#fff}
+  .profile:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .profile .av{width:56px;height:56px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);
+    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 10px}
+  .profile .pn{font-weight:650}
+  .err{color:var(--bad);font-size:13px;margin-top:6px;min-height:18px}
+  .link-btn{background:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:6px}
+  .user-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);color:#fff;
+    padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="gear" onclick="openSettings()" title="Settings">&#9881;</div>
+  <div class="names" id="hNames">Your Wedding</div>
+  <div class="sub" id="hSub">Set your names &amp; date in settings</div>
+  <div class="countdown" id="countdown"></div>
+  <div class="topbtns">
+    <span class="user-chip" id="userChip" style="display:none"></span>
+    <button class="btn ghost sm" onclick="openSettings()">&#9881; Settings</button>
+    <button class="btn ghost sm" id="sampleBtn" onclick="loadSample()">Load sample data</button>
+    <button class="btn ghost sm" id="lockBtn" onclick="lockNow()" style="display:none">&#128274; Lock</button>
+  </div>
+</header>
+
+<!-- Onboarding (local mode) -->
+<div class="fs" id="onboarding"><div class="fs-card" id="obCard"></div></div>
+<!-- Lock screen (local mode) -->
+<div class="fs" id="lock"><div class="fs-card" id="lockCard"></div></div>
+<!-- Cloud auth (shared mode) -->
+<div class="fs" id="cloudauth"><div class="fs-card" id="caCard"></div></div>
+
+<nav class="tabs" id="tabs"></nav>
+
+<div class="wrap">
+  <!-- DASHBOARD -->
+  <section class="panel" data-panel="dashboard">
+    <div class="grid cols-3">
+      <div class="card"><div class="stat" id="dTasks">0/0</div><div class="stat-lab">Tasks complete</div>
+        <div class="bar" style="margin-top:10px"><span id="dTasksBar" style="width:0"></span></div></div>
+      <div class="card"><div class="stat" id="dBudget">$0</div><div class="stat-lab">Spent of budget</div>
+        <div class="bar" id="dBudgetBarWrap" style="margin-top:10px"><span id="dBudgetBar" style="width:0"></span></div></div>
+      <div class="card"><div class="stat" id="dGuests">0</div><div class="stat-lab">Guests confirmed</div>
+        <div class="stat-lab" id="dGuestsBreak" style="margin-top:6px"></div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <h2>Up next</h2>
+        <div class="list" id="dUpNext"></div>
+      </div>
+      <div class="card">
+        <h2>Your events</h2>
+        <div class="list" id="dEvents"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="panel" data-panel="checklist">
+    <div class="section-head">
+      <h2>Checklist</h2>
+      <button class="btn" onclick="openTaskModal()">+ Add task</button>
+    </div>
+    <div id="checklistGroups"></div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="panel" data-panel="budget">
+    <div class="section-head">
+      <h2>Budget</h2>
+      <button class="btn" onclick="openBudgetModal()">+ Add item</button>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="row" style="justify-content:space-between">
+        <div><div class="stat-lab">Total budget</div><div class="stat" id="bTotal">$0</div></div>
+        <div><div class="stat-lab">Spent</div><div class="stat" id="bSpent">$0</div></div>
+        <div><div class="stat-lab">Remaining</div><div class="stat" id="bLeft">$0</div></div>
+      </div>
+      <div class="bar" id="bBarWrap" style="margin-top:14px"><span id="bBar" style="width:0"></span></div>
+    </div>
+    <div class="card">
+      <table><thead><tr><th>Item</th><th>Category</th><th style="text-align:right">Estimated</th><th style="text-align:right">Actual</th><th></th></tr></thead>
+      <tbody id="budgetRows"></tbody></table>
+      <div class="empty" id="budgetEmpty" style="display:none"><div class="big">&#128176;</div>No budget items yet. Add your first one.</div>
+    </div>
+  </section>
+
+  <!-- EVENTS -->
+  <section class="panel" data-panel="events">
+    <div class="section-head">
+      <h2>Events</h2>
+      <button class="btn" onclick="openEventModal()">+ Add event</button>
+    </div>
+    <div id="eventsList"></div>
+  </section>
+
+  <!-- GUESTS -->
+  <section class="panel" data-panel="guests">
+    <div class="section-head">
+      <h2>Guest list</h2>
+      <button class="btn" onclick="openGuestModal()">+ Add guest</button>
+    </div>
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="card"><div class="stat" id="gInvited">0</div><div class="stat-lab">On the list</div>
+        <div class="stat-lab" id="gSentBreak" style="margin-top:6px"></div></div>
+      <div class="card"><div class="stat" id="gConfirmed">0</div><div class="stat-lab">Confirmed (heads)</div></div>
+      <div class="card"><div class="stat" id="gPending">0</div><div class="stat-lab">Awaiting reply</div></div>
+    </div>
+    <div class="card">
+      <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th>RSVP</th><th></th></tr></thead>
+      <tbody id="guestRows"></tbody></table>
+      <div class="empty" id="guestEmpty" style="display:none"><div class="big">&#128106;</div>No guests yet. Add your first one.</div>
+    </div>
+  </section>
+</div>
+
+<div class="footnote">All data is saved privately in this browser. Free to use &amp; host. &#9825;</div>
+
+<!-- Generic modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+/* ---------------- State ---------------- */
+const KEY = "weddingPlanner.v1";
+const blank = {
+  settings:{ partnerA:"", partnerB:"", date:"", venue:"", budget:0, theme:"rose", currency:"USD", pinA:"", pinB:"" },
+  tasks:[], budget:[], events:[], guests:[]
+};
+let S = load();
+
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(JSON.parse(JSON.stringify(blank)), JSON.parse(r)); }
+  catch(e){}
+  return JSON.parse(JSON.stringify(blank));
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  if(typeof CLOUD!=="undefined" && CLOUD && cloudPaired && !applyingRemote) scheduleCloudSave(); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+const CURRENCIES={ USD:{symbol:"$",locale:"en-US"}, INR:{symbol:"₹",locale:"en-IN"} };
+function money(n){ n=Number(n)||0; const c=CURRENCIES[S.settings.currency]||CURRENCIES.USD;
+  return c.symbol+n.toLocaleString(c.locale,{maximumFractionDigits:0}); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------------- Themes ---------------- */
+const THEMES = {
+  rose:   {accent:"#b76e79",soft:"#f3e0e3",dark:"#8f4f59",bg:"#faf7f5",name:"Dusty Rose"},
+  sage:   {accent:"#7c8c6a",soft:"#e7ecdf",dark:"#5d6b4d",bg:"#f7f8f4",name:"Sage"},
+  navy:   {accent:"#3a4a6b",soft:"#dfe4ee",dark:"#26324b",bg:"#f5f6fa",name:"Navy"},
+  burgundy:{accent:"#7b2e3b",soft:"#efd9dd",dark:"#5a1f29",bg:"#faf5f5",name:"Burgundy"},
+  gold:   {accent:"#b08930",soft:"#f3e9d2",dark:"#876625",bg:"#faf8f2",name:"Gold"},
+  lav:    {accent:"#8a76b0",soft:"#e7e1f1",dark:"#6a5990",bg:"#f8f6fb",name:"Lavender"},
+  teal:   {accent:"#2f8a8a",soft:"#d6ecec",dark:"#226868",bg:"#f3faf9",name:"Teal"},
+  terra:  {accent:"#c1683f",soft:"#f4e0d4",dark:"#9a4f2d",bg:"#faf6f3",name:"Terracotta"}
+};
+function applyTheme(key){
+  const t = THEMES[key] || THEMES.rose;
+  const r = document.documentElement.style;
+  r.setProperty("--accent",t.accent); r.setProperty("--accent-soft",t.soft);
+  r.setProperty("--accent-dark",t.dark); r.setProperty("--bg",t.bg);
+}
+
+/* ---------------- Tabs ---------------- */
+const TABS = [["dashboard","Dashboard"],["checklist","Checklist"],["budget","Budget"],["events","Events"],["guests","Guests"]];
+function buildTabs(){
+  document.getElementById("tabs").innerHTML = TABS.map(([k,l],i)=>
+    `<button class="tab${i===0?" active":""}" data-tab="${k}" onclick="switchTab('${k}')">${l}</button>`).join("");
+}
+function switchTab(k){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===k));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.dataset.panel===k));
+  renderAll();
+}
+
+/* ---------------- Render: header + countdown ---------------- */
+function renderHeader(){
+  const a=S.settings.partnerA, b=S.settings.partnerB;
+  document.getElementById("hNames").textContent = (a||b) ? `${a||"___"} & ${b||"___"}` : "Your Wedding";
+  let sub = [];
+  if(S.settings.date){
+    const d = new Date(S.settings.date+"T00:00:00");
+    sub.push(d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}));
+  }
+  if(S.settings.venue) sub.push(S.settings.venue);
+  document.getElementById("hSub").textContent = sub.length?sub.join("  ·  "):"Set your names & date in settings";
+  renderCountdown();
+}
+function renderCountdown(){
+  const el=document.getElementById("countdown");
+  if(!S.settings.date){ el.innerHTML=""; return; }
+  const now=new Date(); const d=new Date(S.settings.date+"T00:00:00");
+  let diff=Math.floor((d-now)/86400000);
+  if(diff<0){ el.innerHTML=`<div class="cd-box"><div class="cd-num">&#9825;</div><div class="cd-lab">Married!</div></div>`; return; }
+  const wk=Math.floor(diff/7);
+  el.innerHTML =
+    `<div class="cd-box"><div class="cd-num">${diff}</div><div class="cd-lab">Days</div></div>`+
+    `<div class="cd-box"><div class="cd-num">${wk}</div><div class="cd-lab">Weeks</div></div>`+
+    `<div class="cd-box"><div class="cd-num">${Math.ceil(diff/30.4)}</div><div class="cd-lab">Months</div></div>`;
+}
+
+/* ---------------- Render: dashboard ---------------- */
+function renderDashboard(){
+  const done=S.tasks.filter(t=>t.done).length, total=S.tasks.length;
+  document.getElementById("dTasks").textContent=`${done}/${total}`;
+  document.getElementById("dTasksBar").style.width=(total?done/total*100:0)+"%";
+
+  const spent=S.budget.reduce((s,i)=>s+(Number(i.actual)||0),0);
+  const bud=Number(S.settings.budget)||0;
+  document.getElementById("dBudget").textContent=money(spent);
+  const bw=document.getElementById("dBudgetBar"); bw.style.width=(bud?Math.min(spent/bud*100,100):0)+"%";
+  document.getElementById("dBudgetBarWrap").classList.toggle("over",bud&&spent>bud);
+
+  const heads=S.guests.filter(g=>g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
+  document.getElementById("dGuests").textContent=heads;
+  const pend=S.guests.filter(g=>g.rsvp==="pending").length;
+  document.getElementById("dGuestsBreak").textContent=`${S.guests.length} invited · ${pend} awaiting reply`;
+
+  // up next: incomplete tasks sorted by due
+  const up=S.tasks.filter(t=>!t.done).sort((a,b)=>(a.due||"9999")<(b.due||"9999")?-1:1).slice(0,5);
+  document.getElementById("dUpNext").innerHTML = up.length? up.map(t=>
+    `<div class="item"><span class="item-title">${esc(t.title)}</span><span class="item-meta">${t.due?fmtDate(t.due):t.phase||""}</span></div>`).join("")
+    : `<div class="empty" style="padding:18px"><div class="muted">No open tasks &mdash; nicely done.</div></div>`;
+
+  document.getElementById("dEvents").innerHTML = S.events.length? S.events.map(ev=>{
+    const dn=ev.tasks?ev.tasks.filter(t=>t.done).length:0, tt=ev.tasks?ev.tasks.length:0;
+    return `<div class="item"><span class="item-title">${esc(ev.name)}</span><span class="item-meta">${ev.date?fmtDate(ev.date):""} · ${dn}/${tt} tasks</span></div>`;
+  }).join("") : `<div class="empty" style="padding:18px"><div class="muted">No events yet.</div></div>`;
+}
+function fmtDate(s){ if(!s)return""; const d=new Date(s+"T00:00:00"); return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+
+/* ---------------- Render: checklist ---------------- */
+const PHASES=["12+ months","9 months","6 months","3 months","1 month","1 week","Day of","Other"];
+function renderChecklist(){
+  const wrap=document.getElementById("checklistGroups");
+  if(!S.tasks.length){ wrap.innerHTML=`<div class="card"><div class="empty"><div class="big">&#128221;</div>No tasks yet. Add one, or load sample data to start from a full template.</div></div>`; return; }
+  const groups={};
+  S.tasks.forEach(t=>{ const p=t.phase||"Other"; (groups[p]=groups[p]||[]).push(t); });
+  const order=PHASES.filter(p=>groups[p]);
+  Object.keys(groups).forEach(p=>{ if(!order.includes(p)) order.push(p); });
+  wrap.innerHTML=order.map(p=>{
+    const ts=groups[p]; const dn=ts.filter(t=>t.done).length;
+    return `<div class="card" style="margin-bottom:16px">
+      <h2>${esc(p)} <span class="pill" style="background:var(--accent-soft);color:var(--accent-dark)">${dn}/${ts.length}</span></h2>
+      <div class="list">${ts.map(t=>taskRow(t)).join("")}</div></div>`;
+  }).join("");
+}
+function taskRow(t){
+  return `<div class="item ${t.done?"done":""}">
+    <div class="check ${t.done?"on":""}" onclick="toggleTask('${t.id}')">${t.done?"&#10003;":""}</div>
+    <span class="item-title">${esc(t.title)}</span>
+    ${t.due?`<span class="item-meta">${fmtDate(t.due)}</span>`:""}
+    <button class="icon-btn" onclick="delTask('${t.id}')" title="Delete">&#10005;</button>
+  </div>`;
+}
+function toggleTask(id){ const t=S.tasks.find(x=>x.id===id); if(t){t.done=!t.done;save();renderAll();} }
+function delTask(id){ S.tasks=S.tasks.filter(x=>x.id!==id); save(); renderAll(); }
+
+/* ---------------- Render: budget ---------------- */
+function renderBudget(){
+  const rows=document.getElementById("budgetRows");
+  document.getElementById("budgetEmpty").style.display=S.budget.length?"none":"block";
+  rows.innerHTML=S.budget.map(i=>`<tr>
+    <td>${esc(i.item)}</td>
+    <td><span class="mini">${esc(i.category||"")}</span></td>
+    <td style="text-align:right">${money(i.est)}</td>
+    <td style="text-align:right;font-weight:600">${money(i.actual)}</td>
+    <td style="text-align:right"><button class="icon-btn" onclick="delBudget('${i.id}')">&#10005;</button></td>
+  </tr>`).join("");
+  const est=S.budget.reduce((s,i)=>s+(Number(i.est)||0),0);
+  const spent=S.budget.reduce((s,i)=>s+(Number(i.actual)||0),0);
+  const bud=Number(S.settings.budget)||0;
+  document.getElementById("bTotal").textContent=money(bud||est);
+  document.getElementById("bSpent").textContent=money(spent);
+  document.getElementById("bLeft").textContent=money((bud||est)-spent);
+  const base=bud||est;
+  document.getElementById("bBar").style.width=(base?Math.min(spent/base*100,100):0)+"%";
+  document.getElementById("bBarWrap").classList.toggle("over",base&&spent>base);
+}
+function delBudget(id){ S.budget=S.budget.filter(x=>x.id!==id); save(); renderAll(); }
+
+/* ---------------- Render: events ---------------- */
+function renderEvents(){
+  const wrap=document.getElementById("eventsList");
+  if(!S.events.length){ wrap.innerHTML=`<div class="card"><div class="empty"><div class="big">&#127881;</div>No events yet. Add ceremony, reception, rehearsal dinner&mdash;each with its own to-do list.</div></div>`; return; }
+  wrap.innerHTML=S.events.map(ev=>{
+    const ts=ev.tasks||[]; const dn=ts.filter(t=>t.done).length;
+    return `<div class="event">
+      <div class="event-head">
+        <div style="flex:1"><div class="et">${esc(ev.name)}</div>
+          <div class="item-meta">${ev.date?fmtDate(ev.date):"No date"}${ev.time?" · "+esc(ev.time):""}${ev.venue?" · "+esc(ev.venue):""}</div></div>
+        <span class="pill" style="background:var(--accent-soft);color:var(--accent-dark)">${dn}/${ts.length} done</span>
+        <button class="icon-btn" onclick="delEvent('${ev.id}')" title="Delete event">&#10005;</button>
+      </div>
+      <div class="event-body">
+        <div class="list">${ts.map(t=>`
+          <div class="item ${t.done?"done":""}">
+            <div class="check ${t.done?"on":""}" onclick="toggleEventTask('${ev.id}','${t.id}')">${t.done?"&#10003;":""}</div>
+            <span class="item-title">${esc(t.title)}</span>
+            <button class="icon-btn" onclick="delEventTask('${ev.id}','${t.id}')">&#10005;</button>
+          </div>`).join("")}</div>
+        <div class="row" style="margin-top:10px">
+          <input type="text" placeholder="Add a to-do for this event…" id="et_${ev.id}" onkeydown="if(event.key==='Enter')addEventTask('${ev.id}')" style="flex:1">
+          <button class="btn ghost sm" onclick="addEventTask('${ev.id}')">Add</button>
+        </div>
+      </div></div>`;
+  }).join("");
+}
+function delEvent(id){ if(confirm("Delete this event and its to-dos?")){ S.events=S.events.filter(e=>e.id!==id); save(); renderAll(); } }
+function addEventTask(eid){
+  const inp=document.getElementById("et_"+eid); const v=inp.value.trim(); if(!v)return;
+  const ev=S.events.find(e=>e.id===eid); ev.tasks=ev.tasks||[]; ev.tasks.push({id:uid(),title:v,done:false});
+  save(); renderAll();
+}
+function toggleEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); const t=ev.tasks.find(x=>x.id===tid); t.done=!t.done; save(); renderAll(); }
+function delEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); ev.tasks=ev.tasks.filter(x=>x.id!==tid); save(); renderAll(); }
+
+/* ---------------- Render: guests ---------------- */
+function renderGuests(){
+  const rows=document.getElementById("guestRows");
+  document.getElementById("guestEmpty").style.display=S.guests.length?"none":"block";
+  const tag={yes:["t-yes","Yes"],no:["t-no","No"],maybe:["t-maybe","Maybe"],pending:["t-pending","Pending"]};
+  rows.innerHTML=S.guests.map(g=>{
+    const tg=tag[g.rsvp]||tag.pending;
+    return `<tr>
+      <td>${esc(g.name)}</td>
+      <td><span class="mini">${esc(g.side||"")}</span></td>
+      <td style="text-align:center">${esc(g.party||1)}</td>
+      <td><span class="mini">${esc(g.meal||"")}</span></td>
+      <td style="text-align:center"><div class="check ${g.invited?"on":""}" style="margin:0 auto" onclick="toggleInvite('${g.id}')" title="${g.invited?"Invite sent":"Mark invite sent"}">${g.invited?"&#10003;":""}</div></td>
+      <td><select class="rsvp-sel" onchange="setRsvp('${g.id}',this.value)" style="width:auto;padding:5px 8px">
+        ${["pending","yes","no","maybe"].map(o=>`<option value="${o}" ${g.rsvp===o?"selected":""}>${tag[o][1]}</option>`).join("")}
+      </select></td>
+      <td style="text-align:right"><button class="icon-btn" onclick="delGuest('${g.id}')">&#10005;</button></td>
+    </tr>`;
+  }).join("");
+  document.getElementById("gInvited").textContent=S.guests.length;
+  document.getElementById("gConfirmed").textContent=S.guests.filter(g=>g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
+  document.getElementById("gPending").textContent=S.guests.filter(g=>g.rsvp==="pending").length;
+  const sent=S.guests.filter(g=>g.invited).length;
+  document.getElementById("gSentBreak").textContent=`${sent} invite${sent===1?"":"s"} sent · ${S.guests.length-sent} to send`;
+}
+function setRsvp(id,v){ const g=S.guests.find(x=>x.id===id); g.rsvp=v; save(); renderAll(); }
+function toggleInvite(id){ const g=S.guests.find(x=>x.id===id); g.invited=!g.invited; save(); renderAll(); }
+function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
+
+/* ---------------- Master render ---------------- */
+function renderAll(){ renderHeader(); renderDashboard(); renderChecklist(); renderBudget(); renderEvents(); renderGuests(); }
+
+/* ---------------- Modal helpers ---------------- */
+const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
+function showModal(html){ modal.innerHTML=html; overlay.classList.add("show"); const f=modal.querySelector("input,select,textarea"); if(f)f.focus(); }
+function closeModal(){ overlay.classList.remove("show"); }
+overlay.addEventListener("click",e=>{ if(e.target===overlay)closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape")closeModal(); });
+
+/* Settings */
+function openSettings(){
+  const s=S.settings;
+  showModal(`<h3>Wedding details</h3>
+    <div class="field"><label class="fl">👰 Bride</label><input type="text" id="m_a" value="${esc(s.partnerA)}"></div>
+    <div class="field"><label class="fl">🤵 Groom</label><input type="text" id="m_b" value="${esc(s.partnerB)}"></div>
+    <div class="field"><label class="fl">Wedding date</label><input type="date" id="m_date" value="${esc(s.date)}"></div>
+    <div class="field"><label class="fl">Venue / location</label><input type="text" id="m_venue" value="${esc(s.venue)}"></div>
+    <div class="field"><label class="fl">Currency</label><select id="m_currency">
+        <option value="USD" ${s.currency==="USD"?"selected":""}>Dollar ($)</option>
+        <option value="INR" ${s.currency==="INR"?"selected":""}>Rupee (₹)</option>
+      </select></div>
+    <div class="field"><label class="fl">Total budget</label><input type="number" id="m_budget" value="${s.budget||""}"></div>
+    <div class="field"><label class="fl">Theme &amp; colors</label>
+      <div class="swatches" id="m_sw">${Object.entries(THEMES).map(([k,t])=>
+        `<div class="sw ${s.theme===k?"sel":""}" data-k="${k}" title="${t.name}" style="background:${t.accent}" onclick="pickTheme('${k}')"></div>`).join("")}</div>
+    </div>
+    ${(typeof CLOUD!=="undefined"&&CLOUD)?"":`<div class="field" style="border-top:1px solid var(--line);padding-top:14px;margin-top:4px">
+      <label class="fl">Private lock &mdash; 4-digit PINs ${hasPins()?'<span class="pill" style="background:#e2f3ea;color:var(--good)">On</span>':'<span class="pill" style="background:#eee9e6;color:var(--muted)">Off</span>'}</label>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">Only the two of you can open the planner. ${hasPins()?"Leave blank to keep current PIN.":"Set both to turn the lock on."}</div>
+      <div class="row" style="gap:8px">
+        <div style="flex:1"><input type="password" inputmode="numeric" maxlength="4" class="pin-in" id="m_pinA" placeholder="${esc(s.partnerA||"Bride")} PIN"></div>
+        <div style="flex:1"><input type="password" inputmode="numeric" maxlength="4" class="pin-in" id="m_pinB" placeholder="${esc(s.partnerB||"Groom")} PIN"></div>
+      </div>
+      ${hasPins()?'<button class="link-btn" onclick="disableLock()">Turn off lock</button>':""}
+      <div class="err" id="m_pinErr"></div>
+    </div>`}
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveSettings()">Save</button>
+    </div>`);
+}
+let pendingTheme=S.settings.theme;
+function pickTheme(k){ pendingTheme=k; applyTheme(k);
+  document.querySelectorAll("#m_sw .sw").forEach(s=>s.classList.toggle("sel",s.dataset.k===k)); }
+function saveSettings(){
+  S.settings.partnerA=val("m_a"); S.settings.partnerB=val("m_b");
+  S.settings.date=val("m_date"); S.settings.venue=val("m_venue");
+  S.settings.budget=Number(val("m_budget"))||0; S.settings.theme=pendingTheme;
+  S.settings.currency=val("m_currency");
+  const sval=id=>{ const e=document.getElementById(id); return e?e.value.trim():""; };
+  const pinA=sval("m_pinA"), pinB=sval("m_pinB"), err=document.getElementById("m_pinErr");
+  const bad=p=>p && !/^\d{4}$/.test(p);
+  if(bad(pinA)||bad(pinB)){ if(err)err.textContent="PINs must be exactly 4 digits."; return; }
+  if(pinA) S.settings.pinA=hashPin(pinA);
+  if(pinB) S.settings.pinB=hashPin(pinB);
+  save(); applyTheme(S.settings.theme); closeModal(); renderAll(); updateUserChip();
+  if(hasPins() && !isUnlocked()) setUnlocked(S.settings.partnerA||"");
+}
+function disableLock(){
+  if(!confirm("Turn off the private lock? Anyone with this browser will be able to open the planner.")) return;
+  S.settings.pinA=""; S.settings.pinB=""; save(); closeModal(); updateUserChip();
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+
+/* Add task */
+function openTaskModal(){
+  showModal(`<h3>Add task</h3>
+    <div class="field"><label class="fl">Task</label><input type="text" id="t_title" placeholder="e.g. Book photographer"></div>
+    <div class="field"><label class="fl">Timeline</label><select id="t_phase">${PHASES.map(p=>`<option>${p}</option>`).join("")}</select></div>
+    <div class="field"><label class="fl">Due date (optional)</label><input type="date" id="t_due"></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="addTask()">Add</button></div>`);
+}
+function addTask(){
+  const title=val("t_title"); if(!title){alert("Enter a task name");return;}
+  S.tasks.push({id:uid(),title,phase:val("t_phase"),due:val("t_due"),done:false});
+  save(); closeModal(); renderAll();
+}
+
+/* Add budget */
+function openBudgetModal(){
+  const sym=(CURRENCIES[S.settings.currency]||CURRENCIES.USD).symbol;
+  showModal(`<h3>Add budget item</h3>
+    <div class="field"><label class="fl">Item</label><input type="text" id="b_item" placeholder="e.g. Catering"></div>
+    <div class="field"><label class="fl">Category</label><input type="text" id="b_cat" placeholder="e.g. Food & drink"></div>
+    <div class="field"><label class="fl">Estimated (${sym})</label><input type="number" id="b_est"></div>
+    <div class="field"><label class="fl">Actual / paid (${sym})</label><input type="number" id="b_act"></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="addBudget()">Add</button></div>`);
+}
+function addBudget(){
+  const item=val("b_item"); if(!item){alert("Enter an item name");return;}
+  S.budget.push({id:uid(),item,category:val("b_cat"),est:Number(val("b_est"))||0,actual:Number(val("b_act"))||0});
+  save(); closeModal(); renderAll();
+}
+
+/* Add event */
+function openEventModal(){
+  showModal(`<h3>Add event</h3>
+    <div class="field"><label class="fl">Event name</label><input type="text" id="e_name" placeholder="e.g. Reception"></div>
+    <div class="field"><label class="fl">Date</label><input type="date" id="e_date"></div>
+    <div class="field"><label class="fl">Time (optional)</label><input type="text" id="e_time" placeholder="e.g. 6:00 PM"></div>
+    <div class="field"><label class="fl">Venue (optional)</label><input type="text" id="e_venue"></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="addEvent()">Add</button></div>`);
+}
+function addEvent(){
+  const name=val("e_name"); if(!name){alert("Enter an event name");return;}
+  S.events.push({id:uid(),name,date:val("e_date"),time:val("e_time"),venue:val("e_venue"),tasks:[]});
+  save(); closeModal(); renderAll();
+}
+
+/* Add guest */
+function openGuestModal(){
+  showModal(`<h3>Add guest</h3>
+    <div class="field"><label class="fl">Name</label><input type="text" id="g_name" placeholder="e.g. Priya Sharma"></div>
+    <div class="field"><label class="fl">Side</label><select id="g_side"><option>👰 Bride</option><option>🤵 Groom</option><option>💕 Both / Shared</option></select></div>
+    <div class="field"><label class="fl">Party size (incl. plus-ones)</label><input type="number" id="g_party" value="1" min="1"></div>
+    <div class="field"><label class="fl">Meal (optional)</label><input type="text" id="g_meal" placeholder="e.g. Veg / Chicken"></div>
+    <div class="field"><label class="fl">Invite sent?</label><select id="g_invited"><option value="no">Not yet</option><option value="yes">Sent</option></select></div>
+    <div class="field"><label class="fl">RSVP</label><select id="g_rsvp"><option value="pending">Pending</option><option value="yes">Yes</option><option value="no">No</option><option value="maybe">Maybe</option></select></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="addGuest()">Add</button></div>`);
+}
+function addGuest(){
+  const name=val("g_name"); if(!name){alert("Enter a guest name");return;}
+  S.guests.push({id:uid(),name,side:val("g_side"),party:Number(val("g_party"))||1,meal:val("g_meal"),invited:val("g_invited")==="yes",rsvp:val("g_rsvp")});
+  save(); closeModal(); renderAll();
+}
+
+/* ---------------- Sample data ---------------- */
+function loadSample(){
+  if(S.tasks.length||S.guests.length||S.events.length){
+    if(!confirm("Replace current data with sample data?")) return;
+  }
+  const today=new Date(); const wd=new Date(today.getTime()+250*86400000);
+  const iso=d=>d.toISOString().slice(0,10);
+  S.settings={partnerA:"Alex",partnerB:"Sam",date:iso(wd),venue:"Rosewood Gardens",budget:35000,theme:"rose",currency:S.settings.currency||"USD",pinA:S.settings.pinA||"",pinB:S.settings.pinB||""};
+  S.tasks=[
+    ["Set the date & budget","12+ months",true],["Draft guest list","12+ months",true],
+    ["Book venue","9 months",true],["Book photographer","9 months",false],
+    ["Book caterer","6 months",false],["Choose wedding party","6 months",false],
+    ["Send save-the-dates","6 months",false],["Order invitations","3 months",false],
+    ["Buy attire","3 months",false],["Plan honeymoon","3 months",false],
+    ["Finalize menu","1 month",false],["Confirm headcount with vendors","1 month",false],
+    ["Write vows","1 week",false],["Confirm timeline with vendors","1 week",false],
+    ["Pack for honeymoon","1 week",false],["Relax & get married","Day of",false],
+  ].map(([title,phase,done])=>({id:uid(),title,phase,done}));
+  S.budget=[
+    ["Venue","Venue",12000,12000],["Catering","Food & drink",9000,0],
+    ["Photography","Media",4000,1000],["Flowers","Decor",2500,0],
+    ["Attire","Apparel",3000,800],["Music / DJ","Entertainment",1800,0],
+    ["Invitations","Stationery",700,250],["Cake","Food & drink",600,0],
+  ].map(([item,category,est,actual])=>({id:uid(),item,category,est,actual}));
+  S.events=[
+    {id:uid(),name:"Rehearsal Dinner",date:iso(new Date(wd.getTime()-86400000)),time:"7:00 PM",venue:"The Olive Room",
+      tasks:[{id:uid(),title:"Confirm headcount",done:false},{id:uid(),title:"Choose menu",done:false},{id:uid(),title:"Assign toasts",done:false}]},
+    {id:uid(),name:"Ceremony",date:iso(wd),time:"4:00 PM",venue:"Rosewood Gardens – Lawn",
+      tasks:[{id:uid(),title:"Finalize officiant",done:true},{id:uid(),title:"Order ceremony flowers",done:false},{id:uid(),title:"Print programs",done:false}]},
+    {id:uid(),name:"Reception",date:iso(wd),time:"6:00 PM",venue:"Rosewood Gardens – Ballroom",
+      tasks:[{id:uid(),title:"Confirm DJ playlist",done:false},{id:uid(),title:"Finalize seating chart",done:false},{id:uid(),title:"Order cake",done:false}]},
+  ];
+  S.guests=[
+    ["Priya Sharma","Bride",2,"Veg",true,"yes"],["Marcus Lee","Groom",1,"Chicken",true,"yes"],
+    ["The Garcia Family","Both / Shared",4,"Mixed",true,"yes"],["Jordan Patel","Bride",2,"",true,"pending"],
+    ["Aunt Rosa","Groom",1,"Veg",true,"maybe"],["Chris & Dana","Groom",2,"Fish",false,"yes"],
+    ["Old college crew","Bride",3,"",false,"pending"],["Grandma June","Bride",1,"Veg",false,"yes"],
+  ].map(([name,side,party,meal,invited,rsvp])=>({id:uid(),name,side,party,meal,invited,rsvp}));
+  save(); applyTheme(S.settings.theme); renderAll();
+  switchTab("dashboard");
+}
+
+/* ---------------- Auth: onboarding + lock ---------------- */
+function hashPin(p){ let h=5381; const s="wp::"+p; for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); }
+function hasPins(){ return !!(S.settings.pinA || S.settings.pinB); }
+function isUnlocked(){ try{ return sessionStorage.getItem("wp.unlocked")==="1"; }catch(e){ return true; } }
+function setUnlocked(who){ try{ sessionStorage.setItem("wp.unlocked","1"); sessionStorage.setItem("wp.user",who||""); }catch(e){} }
+function currentUser(){ try{ return sessionStorage.getItem("wp.user")||""; }catch(e){ return ""; } }
+function lockNow(){ if(typeof CLOUD!=="undefined"&&CLOUD){ showLinkModal(); return; } try{ sessionStorage.removeItem("wp.unlocked"); }catch(e){}; showLock(); }
+function showFS(id){ ["onboarding","lock"].forEach(x=>document.getElementById(x).classList.toggle("show",x===id)); }
+function hideFS(){ showFS(""); }
+
+/* Onboarding */
+let ob={step:0,data:{partnerA:"",partnerB:"",date:"",venue:"",currency:"USD",theme:S.settings.theme||"rose",pinA:"",pinB:""}};
+const OB_STEPS=5;
+function startOnboarding(){ ob.step=0; showFS("onboarding"); renderOnboarding(); }
+function obDots(){ let d=""; for(let i=0;i<OB_STEPS;i++) d+=`<span class="d ${i<=ob.step?"on":""}"></span>`; return `<div class="dots">${d}</div>`; }
+function obNext(){ if(!obValidate())return; if(ob.step<OB_STEPS-1){ ob.step++; renderOnboarding(); } else { obFinish(); } }
+function obBack(){ if(ob.step>0){ ob.step--; renderOnboarding(); } }
+function obSet(k,v){ ob.data[k]=v; }
+function obPickTheme(k){ ob.data.theme=k; applyTheme(k); document.querySelectorAll("#obCard .sw").forEach(s=>s.classList.toggle("sel",s.dataset.k===k)); }
+function obValidate(){
+  const d=ob.data, e=document.getElementById("obErr");
+  const fail=m=>{ if(e)e.textContent=m; return false; };
+  if(ob.step===1){ d.partnerA=v("ob_a"); d.partnerB=v("ob_b"); if(!d.partnerA||!d.partnerB) return fail("Please enter both names."); }
+  if(ob.step===2){ d.date=v("ob_date"); d.venue=v("ob_venue"); d.currency=v("ob_cur"); }
+  if(ob.step===4){ d.pinA=v("ob_pinA"); d.pinB=v("ob_pinB");
+    if(!/^\d{4}$/.test(d.pinA)||!/^\d{4}$/.test(d.pinB)) return fail("Each PIN must be exactly 4 digits."); }
+  return true;
+  function v(id){ const el=document.getElementById(id); return el?el.value.trim():""; }
+}
+function obFinish(){
+  const d=ob.data;
+  S.settings.partnerA=d.partnerA; S.settings.partnerB=d.partnerB;
+  S.settings.date=d.date; S.settings.venue=d.venue; S.settings.currency=d.currency;
+  S.settings.theme=d.theme; S.settings.pinA=hashPin(d.pinA); S.settings.pinB=hashPin(d.pinB);
+  save(); applyTheme(S.settings.theme);
+  setUnlocked(d.partnerA); enterApp();
+}
+function renderOnboarding(){
+  const d=ob.data, c=document.getElementById("obCard");
+  const nav=`<div class="fs-actions">${ob.step>0?`<button class="btn ghost" onclick="obBack()">Back</button>`:""}
+    <button class="btn" onclick="obNext()">${ob.step===OB_STEPS-1?"Finish &amp; open planner":"Continue"}</button></div>
+    <div class="err" id="obErr"></div>`;
+  let body="";
+  if(ob.step===0){
+    body=`<div class="heart-badge">&#9825;</div>
+      <div class="kicker">Welcome</div><h2>Let's plan your wedding</h2>
+      <p class="lead">A private space for the two of you &mdash; checklist, budget, events, and guest list, all in one place. Takes about a minute to set up.</p>
+      <div class="fs-actions"><button class="btn" onclick="obNext()">Get started</button></div>`;
+    c.innerHTML=obDots()+body; return;
+  }
+  if(ob.step===1){
+    body=`<div class="kicker">Step 1</div><h2>Who's getting married?</h2><p class="lead">We'll use these throughout your planner.</p>
+      <div class="field"><label class="fl">👰 Bride</label><input type="text" id="ob_a" value="${esc(d.partnerA)}" placeholder="First name"></div>
+      <div class="field"><label class="fl">🤵 Groom</label><input type="text" id="ob_b" value="${esc(d.partnerB)}" placeholder="First name"></div>`;
+  } else if(ob.step===2){
+    body=`<div class="kicker">Step 2</div><h2>When &amp; where</h2><p class="lead">You can change any of this later in Settings.</p>
+      <div class="field"><label class="fl">Wedding date</label><input type="date" id="ob_date" value="${esc(d.date)}"></div>
+      <div class="field"><label class="fl">Venue / location (optional)</label><input type="text" id="ob_venue" value="${esc(d.venue)}"></div>
+      <div class="field"><label class="fl">Currency</label><select id="ob_cur">
+        <option value="USD" ${d.currency==="USD"?"selected":""}>Dollar ($)</option>
+        <option value="INR" ${d.currency==="INR"?"selected":""}>Rupee (₹)</option></select></div>`;
+  } else if(ob.step===3){
+    body=`<div class="kicker">Step 3</div><h2>Pick your style</h2><p class="lead">Choose a color theme &mdash; the whole planner will match.</p>
+      <div class="swatches">${Object.entries(THEMES).map(([k,t])=>
+        `<div class="sw ${d.theme===k?"sel":""}" data-k="${k}" title="${t.name}" style="background:${t.accent}" onclick="obPickTheme('${k}')"></div>`).join("")}</div>`;
+  } else if(ob.step===4){
+    body=`<div class="kicker">Step 4</div><h2>Keep it private</h2>
+      <p class="lead">Set a 4-digit PIN for each of you. Only the two of you will be able to open this planner on this device.</p>
+      <div class="field"><label class="fl">👰 ${esc(d.partnerA||"Bride")}'s PIN</label>
+        <input type="password" inputmode="numeric" maxlength="4" class="pin-in" id="ob_pinA" value="${esc(d.pinA)}" placeholder="••••"></div>
+      <div class="field"><label class="fl">🤵 ${esc(d.partnerB||"Groom")}'s PIN</label>
+        <input type="password" inputmode="numeric" maxlength="4" class="pin-in" id="ob_pinB" value="${esc(d.pinB)}" placeholder="••••"></div>`;
+  }
+  c.innerHTML=obDots()+body+nav;
+  const f=c.querySelector("input"); if(f)f.focus();
+}
+
+/* Lock screen */
+let lockSel=null;
+function showLock(){
+  if(!hasPins()){ enterApp(); return; }
+  lockSel=null; showFS("lock"); renderLock();
+}
+function renderLock(){
+  const c=document.getElementById("lockCard"), s=S.settings;
+  const emo=k=>k==="A"?"👰":"🤵";
+  if(!lockSel){
+    const profs=[];
+    if(s.pinA) profs.push(["A",s.partnerA||"Bride"]);
+    if(s.pinB) profs.push(["B",s.partnerB||"Groom"]);
+    c.innerHTML=`<div class="heart-badge">💍</div><div class="kicker">${esc((s.partnerA||"")+(s.partnerA&&s.partnerB?" 💕 ":"")+(s.partnerB||""))}</div>
+      <h2>Welcome back</h2><p class="lead">Choose your profile to unlock the planner.</p>
+      <div class="profiles">${profs.map(([k,n])=>
+        `<div class="profile" onclick="lockPick('${k}')"><div class="av" style="font-size:28px">${emo(k)}</div><div class="pn">${esc(n)}</div></div>`).join("")}</div>`;
+    return;
+  }
+  const name = lockSel==="A" ? (s.partnerA||"Bride") : (s.partnerB||"Groom");
+  c.innerHTML=`<div class="heart-badge">${emo(lockSel)}</div><div class="kicker">Hi ${esc(name)}</div>
+    <h2>Enter your PIN</h2><p class="lead">4-digit PIN to open your planner.</p>
+    <div class="field"><input type="password" inputmode="numeric" maxlength="4" class="pin-in" id="lock_pin"
+      placeholder="••••" onkeydown="if(event.key==='Enter')lockTry()"></div>
+    <div class="err" id="lockErr"></div>
+    <div class="fs-actions"><button class="btn ghost" onclick="lockBack()">Back</button>
+      <button class="btn" onclick="lockTry()">Unlock</button></div>`;
+  const f=document.getElementById("lock_pin"); if(f)f.focus();
+}
+function lockPick(k){ lockSel=k; renderLock(); }
+function lockBack(){ lockSel=null; renderLock(); }
+function lockTry(){
+  const s=S.settings, val=document.getElementById("lock_pin").value.trim();
+  const target = lockSel==="A" ? s.pinA : s.pinB;
+  if(hashPin(val)===target){
+    setUnlocked(lockSel==="A"?(s.partnerA||"Bride"):(s.partnerB||"Groom"));
+    enterApp();
+  } else {
+    document.getElementById("lockErr").textContent="Incorrect PIN. Try again.";
+    const f=document.getElementById("lock_pin"); f.value=""; f.focus();
+  }
+}
+
+function enterApp(){
+  hideFS();
+  applyTheme(S.settings.theme);
+  switchTab("dashboard");
+  renderAll();
+  updateUserChip();
+}
+function updateUserChip(){
+  const chip=document.getElementById("userChip"), lb=document.getElementById("lockBtn");
+  if(typeof CLOUD!=="undefined"&&CLOUD){
+    if(cloudPaired){ chip.style.display=""; chip.innerHTML="👰 "+esc(S.settings.partnerA||"Bride")+" 💕 🤵 "+esc(S.settings.partnerB||"Groom"); }
+    else chip.style.display="none";
+    lb.style.display=""; lb.innerHTML="&#128279; Our link"; return;
+  }
+  if(hasPins()){
+    lb.style.display=""; lb.innerHTML="&#128274; Lock";
+    const u=currentUser();
+    if(u){ chip.style.display=""; chip.innerHTML=(u===S.settings.partnerB?"🤵":"👰")+" "+esc(u); } else chip.style.display="none";
+  } else { lb.style.display="none"; chip.style.display="none"; }
+}
+
+/* ================= Cloud (Supabase) shared mode ================= */
+const SUPABASE_URL = "https://vjncnjalnxdkyzbdrxck.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_OFb5N_IcPI0Tm62ivnoMtQ_UO3v0kXZ";
+const CLOUD = /^https:\/\/[a-z0-9-]+\.supabase\.co/i.test(SUPABASE_URL) && (SUPABASE_ANON_KEY||"").length>20 && !!(window.supabase&&window.supabase.createClient);
+let sb = CLOUD ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let cloudToken=null, cloudBride="", cloudGroom="", cloudUpdatedAt=null;
+let cloudPaired=false, applyingRemote=false, pollT=null, saveT=null;
+
+function persistToken(t){ cloudToken=t; try{ localStorage.setItem("wp.cloudToken",t);}catch(e){} }
+function savedToken(){ try{ return localStorage.getItem("wp.cloudToken"); }catch(e){ return null; } }
+function myLink(){ const o=location.origin; const base=(o&&o!=="null")? o+location.pathname : "(your site URL once deployed)"; return base+"#w="+(cloudToken||""); }
+function titleCase(s){ return s? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
+function roleEmoji(role){ return role==="groom" ? "🤵" : "👰"; }
+async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args); if(error) throw error; return data; }
+
+function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests,
+  settings:{ partnerA:S.settings.partnerA, partnerB:S.settings.partnerB, date:S.settings.date,
+    venue:S.settings.venue, budget:S.settings.budget, theme:S.settings.theme, currency:S.settings.currency } }; }
+function adoptCouple(d){ if(!d) return; applyingRemote=true;
+  const data=d.data||{};
+  S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[];
+  if(data.settings) S.settings=Object.assign(S.settings, data.settings);
+  if(d.bride_name) S.settings.partnerA=d.bride_name;
+  if(d.groom_name) S.settings.partnerB=d.groom_name;
+  if(d.wedding_date) S.settings.date=d.wedding_date;
+  cloudBride=S.settings.partnerA; cloudGroom=S.settings.partnerB;
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  applyTheme(S.settings.theme); renderAll(); updateUserChip(); applyingRemote=false; }
+
+function scheduleCloudSave(){ clearTimeout(saveT); saveT=setTimeout(()=>{ cloudSave().catch(e=>console.warn("save",e)); }, 700); }
+async function cloudSave(){ const r=await rpc("wp_save",{p_token:cloudToken,p_data:cloudPayload(),
+  p_bride:S.settings.partnerA||"", p_groom:S.settings.partnerB||"", p_date:S.settings.date||null});
+  if(r&&r.updated_at) cloudUpdatedAt=r.updated_at; return r; }
+async function cloudLoad(){ return await rpc("wp_load",{p_token:cloudToken}); }
+
+function startPolling(){ stopPolling(); pollT=setInterval(async()=>{
+  try{ const r=await cloudLoad(); if(r&&!r.error&&r.updated_at&&r.updated_at!==cloudUpdatedAt){ cloudUpdatedAt=r.updated_at; adoptCouple(r); } }catch(e){} },7000); }
+function stopPolling(){ if(pollT) clearInterval(pollT); pollT=null; }
+
+/* ----- cloud screens: signup / couple / admin ----- */
+function showCloudAuth(){ document.getElementById("cloudauth").classList.add("show"); }
+function hideCloudAuth(){ document.getElementById("cloudauth").classList.remove("show"); }
+
+function hashRoute(){
+  const h=location.hash||""; let m;
+  if(m=h.match(/[#&]admin=([^&]+)/)) return {kind:"admin", key:decodeURIComponent(m[1])};
+  if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
+  return {kind:"signup"};
+}
+async function cloudBoot(){
+  document.getElementById("sampleBtn").style.display="none";
+  const r=hashRoute();
+  if(r.kind==="admin"){ showAdmin(r.key); return; }
+  if(r.kind==="couple"){ cloudToken=r.token; await openCouple(); return; }
+  showSignup();
+}
+
+function showSignup(err){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="460px";
+  const saved=savedToken();
+  c.innerHTML=`<div class="heart-badge">💍</div><div class="kicker">Welcome</div>
+    <h2>Create your wedding planner</h2>
+    <p class="lead">Sign up once and get a private link for the two of you &mdash; open it on any phone or laptop to plan together.</p>
+    <div class="field"><label class="fl">👰 Bride's name</label><input type="text" id="su_bride" placeholder="First name"></div>
+    <div class="field"><label class="fl">🤵 Groom's name</label><input type="text" id="su_groom" placeholder="First name"></div>
+    <div class="field"><label class="fl">Wedding date (optional)</label><input type="date" id="su_date"></div>
+    <div class="fs-actions"><button class="btn" onclick="doSignup()">Create our planner 💕</button></div>
+    ${saved?`<div style="text-align:center;margin-top:6px"><button class="link-btn" onclick="openSaved()">Open my saved planner</button></div>`:""}
+    <div class="err" id="suErr">${err?esc(err):""}</div>`;
+  const f=document.getElementById("su_bride"); if(f)f.focus();
+}
+function caVal(id){ const e=document.getElementById(id); return e?e.value.trim():""; }
+async function doSignup(){
+  const b=caVal("su_bride"), g=caVal("su_groom"), date=caVal("su_date");
+  if(!b||!g){ document.getElementById("suErr").textContent="Please enter both names."; return; }
+  try{
+    const r=await rpc("wp_signup",{p_bride:b,p_groom:g,p_date:date||null});
+    cloudToken=r.token; persistToken(r.token);
+    S.settings.partnerA=b; S.settings.partnerB=g; if(date)S.settings.date=date;
+    try{ history.replaceState(null,"","#w="+r.token); }catch(e){ location.hash="#w="+r.token; }
+    await openCouple();
+  }catch(e){ document.getElementById("suErr").textContent="Couldn't reach the server. Try again."; }
+}
+function openSaved(){ const t=savedToken(); if(t){ cloudToken=t; try{history.replaceState(null,"","#w="+t);}catch(e){location.hash="#w="+t;} openCouple(); } }
+
+async function openCouple(){
+  try{
+    const d=await cloudLoad();
+    if(d.error){ showSignup("We couldn't find that planner link. Check the URL, or sign up below."); return; }
+    persistToken(cloudToken);
+    cloudUpdatedAt=d.updated_at; cloudPaired=true;
+    adoptCouple(d);
+    hideCloudAuth(); enterApp(); startPolling();
+  }catch(e){ showSignup("Couldn't reach the server. Check your connection and try again."); }
+}
+
+async function showAdmin(key){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="660px";
+  c.innerHTML=`<div class="heart-badge">📋</div><h2>All couples</h2><p class="lead">Loading…</p>`;
+  try{
+    const r=await rpc("wp_admin_list",{p_key:key});
+    if(r.error){ c.innerHTML=`<div class="heart-badge">🔒</div><h2>Access denied</h2><p class="lead">That admin key isn't valid.</p>`; return; }
+    const rows=r.couples||[];
+    c.innerHTML=`<div class="kicker">Admin · master view</div><h2>All couples (${rows.length})</h2>
+      <p class="lead">Everyone who has signed up.</p>
+      <table><thead><tr><th>Couple</th><th>Date</th><th>Signed up</th><th style="text-align:center">Guests</th></tr></thead>
+      <tbody>${rows.length?rows.map(x=>`<tr>
+        <td>👰 ${esc(x.bride_name||"—")} 💕 ${esc(x.groom_name||"—")} 🤵</td>
+        <td class="mini">${x.wedding_date?esc(x.wedding_date):"—"}</td>
+        <td class="mini">${esc((x.created_at||"").slice(0,10))}</td>
+        <td style="text-align:center">${x.guests||0}</td></tr>`).join(""):`<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">No couples have signed up yet.</td></tr>`}</tbody></table>`;
+  }catch(e){ c.innerHTML=`<div class="heart-badge">⚠️</div><h2>Couldn't load</h2><p class="lead">Check your connection and try again.</p>`; }
+}
+
+function showLinkModal(){
+  showModal(`<h3>Your private link</h3>
+    <p class="muted" style="font-size:13px">Open this on any device to reach your plan. Bookmark it &mdash; it's your key, so keep it between the two of you.</p>
+    <div class="field"><label class="fl">Your couple link</label>
+      <input type="text" readonly value="${esc(myLink())}" onclick="this.select()"></div>
+    <p class="muted" style="font-size:13px">👰 ${esc(S.settings.partnerA||"Bride")} 💕 🤵 ${esc(S.settings.partnerB||"Groom")}</p>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Done</button></div>`);
+}
+
+/* ---------------- Init ---------------- */
+buildTabs();
+applyTheme(S.settings.theme);
+(function boot(){
+  if(CLOUD){ cloudBoot(); return; }
+  const fresh = !S.settings.partnerA && !S.settings.partnerB && !hasPins() && !S.tasks.length;
+  if(fresh){ startOnboarding(); return; }
+  if(hasPins() && !isUnlocked()){ showLock(); return; }
+  enterApp();
+})();
+setInterval(renderCountdown,3600000);
+</script>
+</body>
+</html>
