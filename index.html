@@ -925,13 +925,14 @@ async function showAdmin(key){
     if(r.error){ c.innerHTML=`<div class="heart-badge">🔒</div><h2>Access denied</h2><p class="lead">That admin key isn't valid.</p>`; return; }
     const rows=r.couples||[];
     c.innerHTML=`<div class="kicker">Admin · master view</div><h2>All couples (${rows.length})</h2>
-      <p class="lead">Everyone who has signed up.</p>
-      <table><thead><tr><th>Couple</th><th>Date</th><th>Signed up</th><th style="text-align:center">Guests</th></tr></thead>
-      <tbody>${rows.length?rows.map(x=>`<tr>
+      <p class="lead">Everyone who has signed up. Open a couple's planner with their link.</p>
+      <table><thead><tr><th>Couple</th><th>Wedding date</th><th>Signed up</th><th style="text-align:center">Guests</th><th>Planner link</th></tr></thead>
+      <tbody>${rows.length?rows.map(x=>{ const lnk=x.token?(location.origin+location.pathname+"#w="+x.token):""; return `<tr>
         <td>👰 ${esc(x.bride_name||"—")} 💕 ${esc(x.groom_name||"—")} 🤵</td>
         <td class="mini">${x.wedding_date?esc(x.wedding_date):"—"}</td>
         <td class="mini">${esc((x.created_at||"").slice(0,10))}</td>
-        <td style="text-align:center">${x.guests||0}</td></tr>`).join(""):`<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">No couples have signed up yet.</td></tr>`}</tbody></table>`;
+        <td style="text-align:center">${x.guests||0}</td>
+        <td class="mini">${lnk?`<a href="${esc(lnk)}" target="_blank" rel="noopener" style="color:var(--accent-dark);font-weight:600">Open ↗</a>`:"—"}</td></tr>`;}).join(""):`<tr><td colspan="5" class="muted" style="text-align:center;padding:24px">No couples have signed up yet.</td></tr>`}</tbody></table>`;
   }catch(e){ c.innerHTML=`<div class="heart-badge">⚠️</div><h2>Couldn't load</h2><p class="lead">Check your connection and try again.</p>`; }
 }
 
