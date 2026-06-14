@@ -30,7 +30,7 @@ alter table public.weddings enable row level security;
 -- This protects the master "/#admin=..." page that lists every couple.
 -- >>> CHANGE the string below to your own secret before sharing anything. <<<
 create or replace function public.wp_admin_key() returns text
-language sql immutable as $$ select 'wedding-admin-3892'::text $$;
+language sql immutable as $$ select 'weddingadmin'::text $$;
 
 -- ---------- signup: create a couple, return their private token ----------
 create or replace function public.wp_signup(p_bride text, p_groom text, p_date date)

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Planner — Flows &amp; Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root{ color-scheme: light; }
+  *{ box-sizing:border-box; }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#f4f6fb; color:#1f2430; margin:0; padding:34px 20px 90px; }
+  .wrap{ max-width:1000px; margin:0 auto; }
+  h1{ font-size:28px; margin:0 0 4px; letter-spacing:-.01em; }
+  .sub{ color:#6b7280; margin-bottom:20px; font-size:15px; }
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; background:#fff; border:1px solid #e7e9f0; border-radius:12px;
+    padding:12px 16px; margin-bottom:26px; box-shadow:0 1px 2px rgba(20,30,60,.05); }
+  .legend .it{ display:flex; align-items:center; gap:7px; font-size:13px; color:#444b5a; }
+  .chip{ width:20px; height:14px; border-radius:4px; border:1.5px solid; }
+  .c-se{ background:#e3f4ec; border-color:#3f9d6d; } .c-proc{ background:#e9eefc; border-color:#3a5ba0; }
+  .c-dec{ background:#fdf0df; border-color:#d9893c; } .c-data{ background:#efe6f7; border-color:#8a5cc0; }
+  .c-actor{ background:#f9e5e8; border-color:#b76e79; border-radius:9px; }
+  h2{ font-size:18px; margin:30px 0 4px; color:#1f2430; }
+  h2 .n{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px;
+    background:#3a5ba0; color:#fff; font-size:14px; margin-right:9px; vertical-align:middle; }
+  p.desc{ color:#5b6270; font-size:14px; margin:6px 0 14px; }
+  .card{ background:#fff; border:1px solid #e7e9f0; border-radius:16px; box-shadow:0 1px 2px rgba(20,30,60,.05),0 10px 30px rgba(20,30,60,.05);
+    padding:22px; overflow-x:auto; }
+  .mermaid{ display:flex; justify-content:center; }
+  /* Lucidchart-style node polish */
+  .mermaid .node rect, .mermaid .node circle, .mermaid .node polygon, .mermaid .node path,
+  .mermaid g.actor > rect, .mermaid rect.actor, .mermaid .note{
+    filter: drop-shadow(0 2px 3px rgba(20,30,60,.16)); }
+  .mermaid .cluster rect{ fill:#fbfcfe !important; stroke:#e2e6ef !important; rx:14; ry:14;
+    filter: drop-shadow(0 2px 8px rgba(20,30,60,.06)); }
+  .mermaid .cluster text{ fill:#7a8195 !important; font-weight:600; }
+  .mermaid .edgeLabel{ background:#fff; padding:2px 5px; border-radius:5px; color:#444b5a; }
+  footer{ text-align:center; color:#9aa0ad; font-size:12px; margin-top:44px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wedding Planner — Flows &amp; Architecture &#128141;</h1>
+  <div class="sub">Every flow in the app: signup, cross-device sync, guest RSVP, and the admin console.</div>
+  <div class="legend">
+    <div class="it"><span class="chip c-actor"></span> Person</div>
+    <div class="it"><span class="chip c-se"></span> Start / End</div>
+    <div class="it"><span class="chip c-proc"></span> Process / Screen</div>
+    <div class="it"><span class="chip c-dec"></span> Decision</div>
+    <div class="it"><span class="chip c-data"></span> Data store</div>
+  </div>
+
+  <h2><span class="n">1</span>System architecture</h2>
+  <p class="desc">A static single-page app on GitHub Pages talks to Supabase only through secure functions; the database is locked down so nothing reads or writes it directly.</p>
+  <div class="card"><pre class="mermaid">
+flowchart LR
+  subgraph Users["PEOPLE"]
+    direction TB
+    C(["Couple"]):::actor
+    G(["Guest"]):::actor
+    A(["Admin / Owner"]):::actor
+  end
+  subgraph Host["GITHUB PAGES"]
+    APP("index.html<br/>single-page app"):::proc
+  end
+  subgraph Supa["SUPABASE"]
+    RPC("Secure RPC functions<br/>SECURITY DEFINER"):::proc
+    DB[("weddings table<br/>RLS enabled")]:::data
+  end
+  C --> APP
+  G --> APP
+  A --> APP
+  APP -- "publishable key" --> RPC
+  RPC --> DB
+  classDef actor fill:#f9e5e8,stroke:#b76e79,stroke-width:1.5px,color:#5a2a31;
+  classDef proc fill:#e9eefc,stroke:#3a5ba0,stroke-width:1.5px,color:#22305a;
+  classDef data fill:#efe6f7,stroke:#8a5cc0,stroke-width:1.5px,color:#3f2a5a;
+  </pre></div>
+
+  <h2><span class="n">2</span>Routing — what each link opens</h2>
+  <p class="desc">The app is one file; the part after <code>#</code> in the URL decides which screen renders.</p>
+  <div class="card"><pre class="mermaid">
+flowchart TD
+  S(["Open the site"]):::se --> H{"URL hash?"}:::dec
+  H -- "#admin" --> AD("Admin sign-in,<br/>then couples list"):::proc
+  H -- "#rsvp=TOKEN" --> RS("Public guest<br/>RSVP form"):::proc
+  H -- "#w=TOKEN" --> PL("Couple's private<br/>planner"):::proc
+  H -- "none" --> SU("Signup page"):::proc
+  classDef se fill:#e3f4ec,stroke:#3f9d6d,stroke-width:1.5px,color:#1f5e3a;
+  classDef dec fill:#fdf0df,stroke:#d9893c,stroke-width:1.5px,color:#7a4d12;
+  classDef proc fill:#e9eefc,stroke:#3a5ba0,stroke-width:1.5px,color:#22305a;
+  </pre></div>
+
+  <h2><span class="n">3</span>Couple signup &amp; first load</h2>
+  <p class="desc">A couple signs up once and is sent to their own private URL, which both partners can open on any device.</p>
+  <div class="card"><pre class="mermaid">
+sequenceDiagram
+  actor C as Couple
+  participant APP as App (browser)
+  participant DB as Supabase
+  C->>APP: Enter bride + groom names, date
+  APP->>DB: wp_signup(names, date)
+  DB-->>APP: { token, rsvp_token }
+  APP->>APP: Save token, redirect to #w=token
+  APP->>DB: wp_load(token)
+  DB-->>APP: names, date, plan, rsvp_token
+  APP-->>C: Show planner (checklist, budget, events, guests)
+  Note over C,APP: Couple shares the #w link with their partner
+  </pre></div>
+
+  <h2><span class="n">4</span>Cross-device live sync</h2>
+  <p class="desc">Edits save to the cloud (debounced); other devices poll every few seconds and adopt newer data. Last write wins.</p>
+  <div class="card"><pre class="mermaid">
+sequenceDiagram
+  participant A as Device A (her phone)
+  participant DB as Supabase
+  participant B as Device B (his phone)
+  A->>A: Edit a task / guest / budget
+  A->>DB: wp_save(token, data)  (debounced)
+  loop every ~7 seconds
+    B->>DB: wp_load(token)
+    DB-->>B: data + updated_at
+    alt updated_at is newer
+      B->>B: Adopt data, re-render
+    end
+  end
+  </pre></div>
+
+  <h2><span class="n">5</span>Guest RSVP</h2>
+  <p class="desc">The couple shares a separate public RSVP link. Guests reply themselves and it flows into the couple's guest list — guests never see the planner.</p>
+  <div class="card"><pre class="mermaid">
+sequenceDiagram
+  actor Cpl as Couple
+  actor Gst as Guest
+  participant APP as App
+  participant DB as Supabase
+  Cpl->>APP: Guests tab -> "RSVP link"
+  APP-->>Cpl: yoursite/#rsvp=RSVP_TOKEN
+  Cpl-->>Gst: Share RSVP link
+  Gst->>APP: Open #rsvp link
+  APP->>DB: wp_rsvp_info(rsvp_token)
+  DB-->>APP: bride + groom + date
+  APP-->>Gst: "You're invited" form
+  Gst->>APP: name, attending, party, meal
+  APP->>DB: wp_rsvp_submit(...)
+  DB->>DB: Append guest to plan
+  DB-->>APP: ok -> "Thank you!"
+  Note over Cpl,DB: Couple's planner poll picks up the guest
+  </pre></div>
+
+  <h2><span class="n">6</span>Admin / master view</h2>
+  <p class="desc">Key-protected. The admin signs in once, sees every couple, can open any planner, or delete a couple (with a warning).</p>
+  <div class="card"><pre class="mermaid">
+sequenceDiagram
+  actor Adm as Admin
+  participant APP as App
+  participant DB as Supabase
+  Adm->>APP: Open /#admin
+  APP-->>Adm: Admin sign-in (key)
+  Adm->>APP: Enter admin key
+  APP->>DB: wp_admin_list(key)
+  alt key valid
+    DB-->>APP: All couples + planner links
+    APP-->>Adm: Master table
+    opt Delete a couple
+      Adm->>APP: Click delete, confirm warning
+      APP->>DB: wp_admin_delete(key, token)
+      DB-->>APP: ok -> refresh
+    end
+  else key invalid
+    DB-->>APP: unauthorized
+    APP-->>Adm: "Access denied"
+  end
+  </pre></div>
+
+  <h2><span class="n">7</span>Security model</h2>
+  <p class="desc">Which token or key protects each action — and why the database can't be touched directly.</p>
+  <div class="card"><pre class="mermaid">
+flowchart TD
+  K(["Publishable key<br/>in browser - safe"]):::se --> RPC("Only RPC functions<br/>are exposed"):::proc
+  RPC --> T1{"Which action?"}:::dec
+  T1 -- "couple read / write" --> CT[("Requires secret<br/>#w token")]:::data
+  T1 -- "guest RSVP" --> RT[("Requires rsvp_token<br/>append-only")]:::data
+  T1 -- "admin list / delete" --> AK[("Requires admin key")]:::data
+  RLS("Row Level Security ON"):::proc --> ND(["No direct table access"]):::se
+  classDef se fill:#e3f4ec,stroke:#3f9d6d,stroke-width:1.5px,color:#1f5e3a;
+  classDef proc fill:#e9eefc,stroke:#3a5ba0,stroke-width:1.5px,color:#22305a;
+  classDef dec fill:#fdf0df,stroke:#d9893c,stroke-width:1.5px,color:#7a4d12;
+  classDef data fill:#efe6f7,stroke:#8a5cc0,stroke-width:1.5px,color:#3f2a5a;
+  </pre></div>
+
+  <footer>Wedding Planner &mdash; flow documentation &#9825;</footer>
+</div>
+<script>
+mermaid.initialize({
+  startOnLoad:true, theme:"base",
+  themeVariables:{
+    fontFamily:"-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif", fontSize:"14px",
+    lineColor:"#9aa0ad",
+    primaryColor:"#e9eefc", primaryBorderColor:"#3a5ba0", primaryTextColor:"#22305a",
+    actorBkg:"#e9eefc", actorBorder:"#3a5ba0", actorTextColor:"#22305a", actorLineColor:"#c3c9d6",
+    signalColor:"#8a8f9b", signalTextColor:"#444b5a",
+    noteBkgColor:"#fdf0df", noteBorderColor:"#d9893c", noteTextColor:"#7a4d12",
+    labelBoxBkgColor:"#e9eefc", labelBoxBorderColor:"#3a5ba0", labelTextColor:"#22305a", loopTextColor:"#444b5a"
+  },
+  flowchart:{ nodeSpacing:46, rankSpacing:56, padding:14, useMaxWidth:true, htmlLabels:true, curve:"basis" }
+});
+</script>
+</body>
+</html>
