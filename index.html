@@ -870,7 +870,7 @@ function hideCloudAuth(){ document.getElementById("cloudauth").classList.remove(
 
 function hashRoute(){
   const h=location.hash||""; let m;
-  if(m=h.match(/[#&]admin=([^&]+)/)) return {kind:"admin", key:decodeURIComponent(m[1])};
+  if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
   return {kind:"signup"};
@@ -925,14 +925,26 @@ async function openCouple(){
   }catch(e){ showSignup("Couldn't reach the server. Check your connection and try again."); }
 }
 
+function renderAdminLogin(err){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="420px";
+  c.innerHTML=`<div class="heart-badge">🔒</div><div class="kicker">Admin</div><h2>Admin sign-in</h2>
+    <p class="lead">Enter your admin key to view all couples.</p>
+    <div class="field"><input type="password" id="adm_key" placeholder="Admin key" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <div class="fs-actions"><button class="btn" onclick="adminLogin()">View couples</button></div>
+    <div class="err" id="admErr">${err?esc(err):""}</div>`;
+  const f=document.getElementById("adm_key"); if(f)f.focus();
+}
+function adminLogin(){ const k=caVal("adm_key"); if(!k){ document.getElementById("admErr").textContent="Enter your admin key."; return; } showAdmin(k); }
 async function showAdmin(key){
+  if(!key){ renderAdminLogin(); return; }
   adminKey=key;
   showCloudAuth();
   const c=document.getElementById("caCard"); c.style.maxWidth="720px";
   c.innerHTML=`<div class="heart-badge">📋</div><h2>All couples</h2><p class="lead">Loading…</p>`;
   try{
     const r=await rpc("wp_admin_list",{p_key:key});
-    if(r.error){ c.innerHTML=`<div class="heart-badge">🔒</div><h2>Access denied</h2><p class="lead">That admin key isn't valid.</p>`; return; }
+    if(r.error){ renderAdminLogin("That admin key isn't valid."); return; }
     const rows=r.couples||[]; adminRows=rows;
     c.innerHTML=`<div class="kicker">Admin · master view</div><h2>All couples (${rows.length})</h2>
       <p class="lead">Everyone who has signed up. Open a couple's planner with their link, or remove a couple.</p>
