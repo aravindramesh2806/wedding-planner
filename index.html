@@ -257,7 +257,10 @@
   <section class="panel" data-panel="guests">
     <div class="section-head">
       <h2>Guest list</h2>
-      <button class="btn" onclick="openGuestModal()">+ Add guest</button>
+      <div class="row" style="gap:8px">
+        <button class="btn ghost" onclick="showRsvpShare()">💌 RSVP link</button>
+        <button class="btn" onclick="openGuestModal()">+ Add guest</button>
+      </div>
     </div>
     <div class="grid cols-3" style="margin-bottom:16px">
       <div class="card"><div class="stat" id="gInvited">0</div><div class="stat-lab">On the list</div>
@@ -827,6 +830,7 @@ let sb = CLOUD ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) :
 let cloudToken=null, cloudBride="", cloudGroom="", cloudUpdatedAt=null;
 let cloudPaired=false, applyingRemote=false, pollT=null, saveT=null;
 let adminKey=null, adminRows=[];
+let cloudRsvp=null, rsvpToken=null, rsvpInfo=null;
 
 function persistToken(t){ cloudToken=t; try{ localStorage.setItem("wp.cloudToken",t);}catch(e){} }
 function savedToken(){ try{ return localStorage.getItem("wp.cloudToken"); }catch(e){ return null; } }
@@ -839,6 +843,7 @@ function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.event
   settings:{ partnerA:S.settings.partnerA, partnerB:S.settings.partnerB, date:S.settings.date,
     venue:S.settings.venue, budget:S.settings.budget, theme:S.settings.theme, currency:S.settings.currency } }; }
 function adoptCouple(d){ if(!d) return; applyingRemote=true;
+  if(d.rsvp_token) cloudRsvp=d.rsvp_token;
   const data=d.data||{};
   S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[];
   if(data.settings) S.settings=Object.assign(S.settings, data.settings);
@@ -866,6 +871,7 @@ function hideCloudAuth(){ document.getElementById("cloudauth").classList.remove(
 function hashRoute(){
   const h=location.hash||""; let m;
   if(m=h.match(/[#&]admin=([^&]+)/)) return {kind:"admin", key:decodeURIComponent(m[1])};
+  if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
   return {kind:"signup"};
 }
@@ -873,6 +879,7 @@ async function cloudBoot(){
   document.getElementById("sampleBtn").style.display="none";
   const r=hashRoute();
   if(r.kind==="admin"){ showAdmin(r.key); return; }
+  if(r.kind==="rsvp"){ await showRsvp(r.token); return; }
   if(r.kind==="couple"){ cloudToken=r.token; await openCouple(); return; }
   showSignup();
 }
@@ -887,6 +894,7 @@ function showSignup(err){
     <div class="field"><label class="fl">👰 Bride's name</label><input type="text" id="su_bride" placeholder="First name"></div>
     <div class="field"><label class="fl">🤵 Groom's name</label><input type="text" id="su_groom" placeholder="First name"></div>
     <div class="field"><label class="fl">Wedding date (optional)</label><input type="date" id="su_date"></div>
+    <div class="field"><label class="fl">Email (optional) — so you can recover your link</label><input type="email" id="su_email" placeholder="you@example.com"></div>
     <div class="fs-actions"><button class="btn" onclick="doSignup()">Create our planner 💕</button></div>
     ${saved?`<div style="text-align:center;margin-top:6px"><button class="link-btn" onclick="openSaved()">Open my saved planner</button></div>`:""}
     <div class="err" id="suErr">${err?esc(err):""}</div>`;
@@ -894,10 +902,10 @@ function showSignup(err){
 }
 function caVal(id){ const e=document.getElementById(id); return e?e.value.trim():""; }
 async function doSignup(){
-  const b=caVal("su_bride"), g=caVal("su_groom"), date=caVal("su_date");
+  const b=caVal("su_bride"), g=caVal("su_groom"), date=caVal("su_date"), email=caVal("su_email");
   if(!b||!g){ document.getElementById("suErr").textContent="Please enter both names."; return; }
   try{
-    const r=await rpc("wp_signup",{p_bride:b,p_groom:g,p_date:date||null});
+    const r=await rpc("wp_signup",{p_bride:b,p_groom:g,p_date:date||null,p_email:email||null});
     cloudToken=r.token; persistToken(r.token);
     S.settings.partnerA=b; S.settings.partnerB=g; if(date)S.settings.date=date;
     try{ history.replaceState(null,"","#w="+r.token); }catch(e){ location.hash="#w="+r.token; }
@@ -949,6 +957,56 @@ async function adminDelete(token){
     if(r&&r.error){ alert("Delete failed — admin key not accepted."); return; }
     showAdmin(adminKey);
   }catch(e){ alert("Couldn't reach the server. Please try again."); }
+}
+
+/* ----- public guest RSVP ----- */
+async function showRsvp(token){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="460px";
+  c.innerHTML=`<div class="heart-badge">💌</div><h2>Loading…</h2>`;
+  try{
+    const info=await rpc("wp_rsvp_info",{p_rsvp:token});
+    if(info.error){ c.innerHTML=`<div class="heart-badge">💌</div><h2>Invitation not found</h2><p class="lead">This RSVP link looks incorrect — please double-check it with the couple.</p>`; return; }
+    rsvpToken=token; rsvpInfo=info; renderRsvpForm();
+  }catch(e){ c.innerHTML=`<div class="heart-badge">⚠️</div><h2>Couldn't load</h2><p class="lead">Check your connection and try again.</p>`; }
+}
+function rsvpDateText(d){ if(!d) return ""; const dt=new Date(d+"T00:00:00"); return dt.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}); }
+function renderRsvpForm(){
+  const i=rsvpInfo, c=document.getElementById("caCard");
+  c.innerHTML=`<div class="heart-badge">💌</div><div class="kicker">You're invited</div>
+    <h2>${esc(i.bride_name||"")} 💕 ${esc(i.groom_name||"")}</h2>
+    <p class="lead">${i.wedding_date?esc(rsvpDateText(i.wedding_date))+" — ":""}we'd love to know if you can join us.</p>
+    <div class="field"><label class="fl">Your name</label><input type="text" id="rv_name" placeholder="First & last name"></div>
+    <div class="field"><label class="fl">Will you attend?</label><select id="rv_att"><option value="yes">🎉 Joyfully accept</option><option value="no">😢 Regretfully decline</option></select></div>
+    <div class="field"><label class="fl">How many in your party? (incl. you)</label><input type="number" id="rv_party" value="1" min="1"></div>
+    <div class="field"><label class="fl">Meal preference (optional)</label><input type="text" id="rv_meal" placeholder="e.g. Veg / Chicken"></div>
+    <div class="fs-actions"><button class="btn" onclick="doRsvp()">Send RSVP 💌</button></div>
+    <div class="err" id="rvErr"></div>`;
+  const f=document.getElementById("rv_name"); if(f)f.focus();
+}
+async function doRsvp(){
+  const name=caVal("rv_name");
+  if(!name){ document.getElementById("rvErr").textContent="Please enter your name."; return; }
+  const att=document.getElementById("rv_att").value;
+  const party=Math.max(1, parseInt(caVal("rv_party")||"1",10)||1);
+  const meal=caVal("rv_meal");
+  try{
+    const r=await rpc("wp_rsvp_submit",{p_rsvp:rsvpToken,p_name:name,p_attending:att,p_party:party,p_meal:meal,p_side:""});
+    if(r&&r.error){ document.getElementById("rvErr").textContent="Couldn't send — please try again."; return; }
+    const i=rsvpInfo;
+    document.getElementById("caCard").innerHTML=`<div class="heart-badge">💕</div><div class="kicker">Thank you</div>
+      <h2>${att==="yes"?"See you there!":"We'll miss you"}</h2>
+      <p class="lead">Your RSVP has been sent to ${esc(i.bride_name||"")} & ${esc(i.groom_name||"")}.${att==="yes"?" Can't wait to celebrate with you! 🥂":""}</p>`;
+  }catch(e){ document.getElementById("rvErr").textContent="Couldn't reach the server. Try again."; }
+}
+function showRsvpShare(){
+  if(!(typeof CLOUD!=="undefined"&&CLOUD&&cloudRsvp)){ alert("Guest RSVP links work on the shared online version of your planner."); return; }
+  const link=location.origin+location.pathname+"#rsvp="+cloudRsvp;
+  showModal(`<h3>Guest RSVP link 💌</h3>
+    <p class="muted" style="font-size:13px">Share this with your guests. They RSVP themselves and their replies fill in your guest list automatically.</p>
+    <div class="field"><label class="fl">RSVP link</label>
+      <input type="text" readonly value="${esc(link)}" onclick="this.select()"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Done</button></div>`);
 }
 
 function showLinkModal(){
