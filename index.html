@@ -894,7 +894,6 @@ function showSignup(err){
     <div class="field"><label class="fl">👰 Bride's name</label><input type="text" id="su_bride" placeholder="First name"></div>
     <div class="field"><label class="fl">🤵 Groom's name</label><input type="text" id="su_groom" placeholder="First name"></div>
     <div class="field"><label class="fl">Wedding date (optional)</label><input type="date" id="su_date"></div>
-    <div class="field"><label class="fl">Email (optional) — so you can recover your link</label><input type="email" id="su_email" placeholder="you@example.com"></div>
     <div class="fs-actions"><button class="btn" onclick="doSignup()">Create our planner 💕</button></div>
     ${saved?`<div style="text-align:center;margin-top:6px"><button class="link-btn" onclick="openSaved()">Open my saved planner</button></div>`:""}
     <div class="err" id="suErr">${err?esc(err):""}</div>`;
@@ -902,10 +901,10 @@ function showSignup(err){
 }
 function caVal(id){ const e=document.getElementById(id); return e?e.value.trim():""; }
 async function doSignup(){
-  const b=caVal("su_bride"), g=caVal("su_groom"), date=caVal("su_date"), email=caVal("su_email");
+  const b=caVal("su_bride"), g=caVal("su_groom"), date=caVal("su_date");
   if(!b||!g){ document.getElementById("suErr").textContent="Please enter both names."; return; }
   try{
-    const r=await rpc("wp_signup",{p_bride:b,p_groom:g,p_date:date||null,p_email:email||null});
+    const r=await rpc("wp_signup",{p_bride:b,p_groom:g,p_date:date||null});
     cloudToken=r.token; persistToken(r.token);
     S.settings.partnerA=b; S.settings.partnerB=g; if(date)S.settings.date=date;
     try{ history.replaceState(null,"","#w="+r.token); }catch(e){ location.hash="#w="+r.token; }
