@@ -283,7 +283,7 @@
       <div class="card"><div class="stat" id="gPending">0</div><div class="stat-lab">Awaiting reply</div></div>
     </div>
     <div class="card">
-      <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th>RSVP</th><th></th></tr></thead>
+      <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th style="text-align:center">Stay</th><th>RSVP</th><th></th></tr></thead>
       <tbody id="guestRows"></tbody></table>
       <div class="empty" id="guestEmpty" style="display:none"><div class="big">&#128106;</div>No guests yet. Add your first one.</div>
     </div>
@@ -523,6 +523,7 @@ function renderGuests(){
       <td style="text-align:center">${esc(g.party||1)}</td>
       <td><span class="mini">${esc(g.meal||"")}</span></td>
       <td style="text-align:center"><div class="check ${g.invited?"on":""}" style="margin:0 auto" onclick="toggleInvite('${g.id}')" title="${g.invited?"Invite sent":"Mark invite sent"}">${g.invited?"&#10003;":""}</div></td>
+      <td style="text-align:center"><div class="check ${g.accommodation?"on":""}" style="margin:0 auto" onclick="toggleStay('${g.id}')" title="${g.accommodation?"Needs a room":"No room needed"}">${g.accommodation?"&#10003;":""}</div></td>
       <td><select class="rsvp-sel" onchange="setRsvp('${g.id}',this.value)" style="width:auto;padding:5px 8px">
         ${["pending","yes","no","maybe"].map(o=>`<option value="${o}" ${g.rsvp===o?"selected":""}>${tag[o][1]}</option>`).join("")}
       </select></td>
@@ -533,12 +534,13 @@ function renderGuests(){
   document.getElementById("gConfirmed").textContent=S.guests.filter(g=>g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
   document.getElementById("gPending").textContent=S.guests.filter(g=>g.rsvp==="pending").length;
   const sent=S.guests.filter(g=>g.invited).length;
-  document.getElementById("gSentBreak").textContent=`${sent} invite${sent===1?"":"s"} sent · ${S.guests.length-sent} to send`;
+  document.getElementById("gSentBreak").textContent=`${sent} sent · ${S.guests.length-sent} to send`+((S.guests.filter(g=>g.accommodation).length)?` · ${S.guests.filter(g=>g.accommodation).length} need a room`:"");
 }
 function setRsvp(id,v){ const g=S.guests.find(x=>x.id===id); g.rsvp=v; save(); renderAll(); }
 function sideKeyword(s){ s=(s||"").toLowerCase(); if(s.indexOf("both")>=0)return"both"; if(s.indexOf("groom")>=0)return"groom"; if(s.indexOf("bride")>=0)return"bride"; return""; }
 function setSide(id,v){ const g=S.guests.find(x=>x.id===id); if(g){ g.side=v; save(); renderAll(); } }
 function toggleInvite(id){ const g=S.guests.find(x=>x.id===id); g.invited=!g.invited; save(); renderAll(); }
+function toggleStay(id){ const g=S.guests.find(x=>x.id===id); g.accommodation=!g.accommodation; save(); renderAll(); }
 function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
 
 /* ---------------- Master render ---------------- */
@@ -662,13 +664,14 @@ function openGuestModal(){
     <div class="field"><label class="fl">Party size (incl. plus-ones)</label><input type="number" id="g_party" value="1" min="1"></div>
     <div class="field"><label class="fl">Meal (optional)</label><input type="text" id="g_meal" placeholder="e.g. Veg / Chicken"></div>
     <div class="field"><label class="fl">Invite sent?</label><select id="g_invited"><option value="no">Not yet</option><option value="yes">Sent</option></select></div>
+    <div class="field"><label class="fl">Needs accommodation?</label><select id="g_stay"><option value="no">No</option><option value="yes">Yes</option></select></div>
     <div class="field"><label class="fl">RSVP</label><select id="g_rsvp"><option value="pending">Pending</option><option value="yes">Yes</option><option value="no">No</option><option value="maybe">Maybe</option></select></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
       <button class="btn" onclick="addGuest()">Add</button></div>`);
 }
 function addGuest(){
   const name=val("g_name"); if(!name){alert("Enter a guest name");return;}
-  S.guests.push({id:uid(),name,side:val("g_side"),party:Number(val("g_party"))||1,meal:val("g_meal"),invited:val("g_invited")==="yes",rsvp:val("g_rsvp")});
+  S.guests.push({id:uid(),name,side:val("g_side"),party:Number(val("g_party"))||1,meal:val("g_meal"),invited:val("g_invited")==="yes",accommodation:val("g_stay")==="yes",rsvp:val("g_rsvp")});
   save(); closeModal(); renderAll();
 }
 
