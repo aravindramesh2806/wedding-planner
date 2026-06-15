@@ -266,8 +266,12 @@
       </div>
       <div class="bar" id="bBarWrap" style="margin-top:14px"><span id="bBar" style="width:0"></span></div>
     </div>
+    <div class="card" id="budgetChartCard" style="margin-bottom:16px;display:none">
+      <div class="stat-lab" style="margin-bottom:10px">Spend by category</div>
+      <div id="budgetChart"></div>
+    </div>
     <div class="card">
-      <table><thead><tr><th>Item</th><th>Category</th><th style="text-align:right">Estimated</th><th style="text-align:right">Actual</th><th></th></tr></thead>
+      <table><thead><tr><th>Item</th><th>Category</th><th>Due</th><th>Paid by</th><th style="text-align:center">Paid</th><th style="text-align:right">Estimated</th><th style="text-align:right">Actual</th><th></th></tr></thead>
       <tbody id="budgetRows"></tbody></table>
       <div class="empty" id="budgetEmpty" style="display:none"><div class="big">&#128176;</div>No budget items yet. Add your first one.</div>
     </div>
@@ -317,6 +321,24 @@
       <div class="empty" id="guestEmpty" style="display:none"><div class="big">&#128106;</div>No guests yet. Add your first one.</div>
     </div>
   </section>
+
+  <!-- VENDORS -->
+  <section class="panel" data-panel="vendors">
+    <div class="section-head">
+      <h2>Vendors</h2>
+      <button class="btn" onclick="openVendorModal()">+ Add vendor</button>
+    </div>
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="card"><div class="stat" id="vCount">0</div><div class="stat-lab">Vendors tracked</div></div>
+      <div class="card"><div class="stat" id="vCommitted">$0</div><div class="stat-lab">Total committed</div></div>
+      <div class="card"><div class="stat" id="vPaid">$0</div><div class="stat-lab">Paid so far</div></div>
+    </div>
+    <div class="card">
+      <table><thead><tr><th>Vendor</th><th>Category</th><th>Contact</th><th>Status</th><th style="text-align:right">Cost</th><th style="text-align:right">Paid</th><th></th></tr></thead>
+      <tbody id="vendorRows"></tbody></table>
+      <div class="empty" id="vendorEmpty" style="display:none"><div class="big">&#127894;</div>No vendors yet. Track photographers, caterers, venue, decor, and more.</div>
+    </div>
+  </section>
 </div>
 
 <div class="footnote">All data is saved privately in this browser. Free to use &amp; host. &#9825;</div>
@@ -334,9 +356,10 @@ const KEY = "weddingPlanner.v1";
 let guestEventFilter = null;
 const blank = {
   settings:{ partnerA:"", partnerB:"", date:"", venue:"", budget:0, theme:"rose", currency:"USD", pinA:"", pinB:"" },
-  tasks:[], budget:[], events:[], guests:[]
+  tasks:[], budget:[], events:[], guests:[], vendors:[]
 };
 let S = load();
+if(!S.vendors) S.vendors=[];
 
 function load(){
   try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(JSON.parse(JSON.stringify(blank)), JSON.parse(r)); }
@@ -370,7 +393,7 @@ function applyTheme(key){
 }
 
 /* ---------------- Tabs ---------------- */
-const TABS = [["dashboard","Dashboard"],["checklist","Checklist"],["budget","Budget"],["events","Events"],["guests","Guests"]];
+const TABS = [["dashboard","Dashboard"],["checklist","Checklist"],["budget","Budget"],["events","Events"],["guests","Guests"],["vendors","Vendors"]];
 function buildTabs(){
   document.getElementById("tabs").innerHTML = TABS.map(([k,l],i)=>
     `<button class="tab${i===0?" active":""}" data-tab="${k}" onclick="switchTab('${k}')">${l}</button>`).join("");
@@ -477,13 +500,30 @@ function setEventTaskNote(eid,tid,val){ const ev=S.events.find(e=>e.id===eid); i
 function renderBudget(){
   const rows=document.getElementById("budgetRows");
   document.getElementById("budgetEmpty").style.display=S.budget.length?"none":"block";
-  rows.innerHTML=S.budget.map(i=>`<tr>
-    <td>${esc(i.item)}</td>
-    <td><span class="mini">${esc(i.category||"")}</span></td>
-    <td style="text-align:right">${money(i.est)}</td>
-    <td style="text-align:right;font-weight:600">${money(i.actual)}</td>
-    <td style="text-align:right"><button class="icon-btn" onclick="delBudget('${i.id}')">&#10005;</button></td>
-  </tr>`).join("");
+  const today=new Date(); today.setHours(0,0,0,0);
+  rows.innerHTML=S.budget.map(i=>{
+    let dueCell="<span class=\"muted\" style=\"font-size:12px\">—</span>";
+    if(i.dueDate){
+      const d=new Date(i.dueDate+"T00:00:00");
+      const days=Math.round((d-today)/86400000);
+      let color="", lab=i.dueDate;
+      if(i.paid){ color="var(--muted)"; lab=`${i.dueDate} &#10003;`; }
+      else if(days<0){ color="var(--bad,#c62828)"; lab=`${i.dueDate} (overdue)`; }
+      else if(days<=14){ color="var(--accent-dark)"; lab=`${i.dueDate} (in ${days}d)`; }
+      dueCell=`<span style="font-size:12px;color:${color};font-weight:600">${esc(lab)}</span>`;
+    }
+    const paidCell=`<div class="check ${i.paid?"on":""}" style="margin:0 auto" onclick="toggleBudgetPaid('${i.id}')" title="${i.paid?"Marked paid":"Mark as paid"}">${i.paid?"&#10003;":""}</div>`;
+    return `<tr>
+      <td>${esc(i.item)}</td>
+      <td><span class="mini">${esc(i.category||"")}</span></td>
+      <td>${dueCell}</td>
+      <td><span class="mini">${esc(i.paidBy||"")}</span></td>
+      <td style="text-align:center">${paidCell}</td>
+      <td style="text-align:right">${money(i.est)}</td>
+      <td style="text-align:right;font-weight:600">${money(i.actual)}</td>
+      <td style="text-align:right"><button class="icon-btn" onclick="delBudget('${i.id}')">&#10005;</button></td>
+    </tr>`;
+  }).join("");
   const est=S.budget.reduce((s,i)=>s+(Number(i.est)||0),0);
   const spent=S.budget.reduce((s,i)=>s+(Number(i.actual)||0),0);
   const bud=Number(S.settings.budget)||0;
@@ -493,8 +533,92 @@ function renderBudget(){
   const base=bud||est;
   document.getElementById("bBar").style.width=(base?Math.min(spent/base*100,100):0)+"%";
   document.getElementById("bBarWrap").classList.toggle("over",base&&spent>base);
+  renderBudgetChart();
+}
+function toggleBudgetPaid(id){ const i=S.budget.find(x=>x.id===id); if(!i) return; i.paid=!i.paid; save(); renderAll(); }
+function renderBudgetChart(){
+  const card=document.getElementById("budgetChartCard");
+  const host=document.getElementById("budgetChart");
+  if(!card||!host) return;
+  const byCat={};
+  S.budget.forEach(i=>{ const c=(i.category||"").trim()||"Uncategorized"; byCat[c]=(byCat[c]||0)+(Number(i.actual)||0); });
+  const entries=Object.entries(byCat).filter(([_,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){ card.style.display="none"; return; }
+  card.style.display="block";
+  const max=Math.max(...entries.map(([_,v])=>v));
+  const rowH=28, gap=8, labelW=130, barAreaW=420, total=entries.length*(rowH+gap);
+  const svgW=labelW+barAreaW+80, svgH=total+8;
+  const bars=entries.map(([cat,val],idx)=>{
+    const y=idx*(rowH+gap);
+    const w=Math.max(1,Math.round(val/max*barAreaW));
+    return `<g transform="translate(0,${y})">
+      <text x="${labelW-10}" y="${rowH/2+4}" text-anchor="end" font-size="13" fill="currentColor">${esc(cat)}</text>
+      <rect x="${labelW}" y="4" width="${w}" height="${rowH-8}" rx="6" fill="var(--accent)"></rect>
+      <text x="${labelW+w+8}" y="${rowH/2+4}" font-size="12" fill="currentColor">${money(val)}</text>
+    </g>`;
+  }).join("");
+  host.innerHTML=`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="max-width:${svgW}px;color:var(--text)" xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
 }
 function delBudget(id){ S.budget=S.budget.filter(x=>x.id!==id); save(); renderAll(); }
+
+
+/* ---------------- Render: vendors ---------------- */
+const VENDOR_STATUSES = [["researching","Researching"],["booked","Booked"],["paid","Paid"]];
+function renderVendors(){
+  const rows=document.getElementById("vendorRows"); if(!rows) return;
+  const list = S.vendors||[];
+  document.getElementById("vendorEmpty").style.display=list.length?"none":"block";
+  rows.innerHTML=list.map(v=>{
+    const statusSel=`<select class="rsvp-sel" onchange="setVendorStatus('${v.id}',this.value)" style="width:auto;padding:5px 8px">
+      ${VENDOR_STATUSES.map(([k,l])=>`<option value="${k}" ${v.status===k?"selected":""}>${l}</option>`).join("")}
+    </select>`;
+    const contact=v.contact?`<span class="mini">${esc(v.contact)}</span>`:"";
+    return `<tr>
+      <td><button class="icon-btn" onclick="toggleVendorRow(this)" title="Notes" style="margin-right:2px">&#9656;</button>${esc(v.name)}</td>
+      <td><span class="mini">${esc(v.category||"")}</span></td>
+      <td>${contact}</td>
+      <td>${statusSel}</td>
+      <td style="text-align:right">${money(v.cost)}</td>
+      <td style="text-align:right;font-weight:600">${money(v.paid)}</td>
+      <td style="text-align:right"><button class="icon-btn" onclick="delVendor('${v.id}')">&#10005;</button></td>
+    </tr>
+    <tr class="vendor-detail" style="display:none"><td colspan="7" style="background:var(--accent-soft);padding:10px 16px">
+      <span class="stat-lab" style="margin-right:10px">Notes</span>
+      <textarea oninput="setVendorNotes('${v.id}',this.value)" placeholder="Add any notes about this vendor…" style="width:100%;min-height:60px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit">${esc(v.notes||"")}</textarea>
+    </td></tr>`;
+  }).join("");
+  document.getElementById("vCount").textContent=list.length;
+  document.getElementById("vCommitted").textContent=money(list.reduce((s,v)=>s+(Number(v.cost)||0),0));
+  document.getElementById("vPaid").textContent=money(list.reduce((s,v)=>s+(Number(v.paid)||0),0));
+}
+function toggleVendorRow(btn){ const tr=btn.closest("tr"); const det=tr.nextElementSibling; if(det&&det.classList.contains("vendor-detail")){ const show=det.style.display==="none"; det.style.display=show?"table-row":"none"; btn.innerHTML=show?"&#9662;":"&#9656;"; } }
+function openVendorModal(){
+  const sym=(CURRENCIES[S.settings.currency]||CURRENCIES.USD).symbol;
+  showModal(`<h3>Add vendor</h3>
+    <div class="field"><label class="fl">Name</label><input type="text" id="v_name" placeholder="e.g. Bloom & Co"></div>
+    <div class="grid cols-2" style="gap:10px">
+      <div class="field"><label class="fl">Category</label><input type="text" id="v_cat" placeholder="Photographer, Caterer…"></div>
+      <div class="field"><label class="fl">Status</label><select id="v_status">${VENDOR_STATUSES.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></div>
+    </div>
+    <div class="field"><label class="fl">Contact (phone / email)</label><input type="text" id="v_contact" placeholder="e.g. (555) 123-4567 or hello@vendor.com"></div>
+    <div class="grid cols-2" style="gap:10px">
+      <div class="field"><label class="fl">Cost (${sym})</label><input type="number" id="v_cost"></div>
+      <div class="field"><label class="fl">Paid so far (${sym})</label><input type="number" id="v_paid"></div>
+    </div>
+    <div class="field"><label class="fl">Notes</label><textarea id="v_notes" placeholder="Anything else worth remembering…" style="width:100%;min-height:60px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit"></textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="addVendor()">Add</button></div>`);
+}
+function addVendor(){
+  const name=val("v_name"); if(!name){alert("Enter a vendor name");return;}
+  S.vendors=S.vendors||[];
+  S.vendors.push({id:uid(),name,category:val("v_cat"),contact:val("v_contact"),status:val("v_status")||"researching",
+    cost:Number(val("v_cost"))||0,paid:Number(val("v_paid"))||0,notes:document.getElementById("v_notes")?.value||""});
+  save(); closeModal(); renderAll();
+}
+function setVendorStatus(id,v){ const x=(S.vendors||[]).find(y=>y.id===id); if(!x) return; x.status=v; if(v==="paid" && (!Number(x.paid)||Number(x.paid)<Number(x.cost))){ x.paid=Number(x.cost)||0; } save(); renderAll(); }
+function setVendorNotes(id,v){ const x=(S.vendors||[]).find(y=>y.id===id); if(!x) return; x.notes=v; save(); }
+function delVendor(id){ if(!confirm("Delete this vendor?")) return; S.vendors=(S.vendors||[]).filter(x=>x.id!==id); save(); renderAll(); }
 
 /* ---------------- Render: events ---------------- */
 function renderEvents(){
@@ -653,7 +777,7 @@ function toggleStay(id){ const g=S.guests.find(x=>x.id===id); g.accommodation=!g
 function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
 
 /* ---------------- Master render ---------------- */
-function renderAll(){ renderHeader(); renderDashboard(); renderChecklist(); renderBudget(); renderEvents(); renderGuests(); }
+function renderAll(){ renderHeader(); renderDashboard(); renderChecklist(); renderBudget(); renderEvents(); renderGuests(); renderVendors(); }
 
 /* ---------------- Modal helpers ---------------- */
 const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
@@ -738,14 +862,23 @@ function openBudgetModal(){
   showModal(`<h3>Add budget item</h3>
     <div class="field"><label class="fl">Item</label><input type="text" id="b_item" placeholder="e.g. Catering"></div>
     <div class="field"><label class="fl">Category</label><input type="text" id="b_cat" placeholder="e.g. Food & drink"></div>
-    <div class="field"><label class="fl">Estimated (${sym})</label><input type="number" id="b_est"></div>
-    <div class="field"><label class="fl">Actual / paid (${sym})</label><input type="number" id="b_act"></div>
+    <div class="grid cols-2" style="gap:10px">
+      <div class="field"><label class="fl">Estimated (${sym})</label><input type="number" id="b_est"></div>
+      <div class="field"><label class="fl">Actual / paid (${sym})</label><input type="number" id="b_act"></div>
+    </div>
+    <div class="grid cols-2" style="gap:10px">
+      <div class="field"><label class="fl">Due date</label><input type="date" id="b_due"></div>
+      <div class="field"><label class="fl">Paid by</label><input type="text" id="b_payer" placeholder="e.g. Both"></div>
+    </div>
+    <div class="field"><label class="fl"><input type="checkbox" id="b_paid" style="margin-right:6px"> Mark as paid</label></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
       <button class="btn" onclick="addBudget()">Add</button></div>`);
 }
 function addBudget(){
   const item=val("b_item"); if(!item){alert("Enter an item name");return;}
-  S.budget.push({id:uid(),item,category:val("b_cat"),est:Number(val("b_est"))||0,actual:Number(val("b_act"))||0});
+  const paid=document.getElementById("b_paid")?.checked||false;
+  S.budget.push({id:uid(),item,category:val("b_cat"),est:Number(val("b_est"))||0,actual:Number(val("b_act"))||0,
+    dueDate:val("b_due")||"",paidBy:val("b_payer")||"",paid});
   save(); closeModal(); renderAll();
 }
 
@@ -984,13 +1117,13 @@ function titleCase(s){ return s? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
 function roleEmoji(role){ return role==="groom" ? "🤵" : "👰"; }
 async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args); if(error) throw error; return data; }
 
-function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests,
+function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests, vendors:S.vendors||[],
   settings:{ partnerA:S.settings.partnerA, partnerB:S.settings.partnerB, date:S.settings.date,
     venue:S.settings.venue, budget:S.settings.budget, theme:S.settings.theme, currency:S.settings.currency } }; }
 function adoptCouple(d){ if(!d) return; applyingRemote=true;
   if(d.rsvp_token) cloudRsvp=d.rsvp_token;
   const data=d.data||{};
-  S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[];
+  S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[]; S.vendors=data.vendors||[];
   if(data.settings) S.settings=Object.assign(S.settings, data.settings);
   if(d.bride_name) S.settings.partnerA=d.bride_name;
   if(d.groom_name) S.settings.partnerB=d.groom_name;
