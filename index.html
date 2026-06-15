@@ -172,6 +172,14 @@
   .link-btn{background:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:6px}
   .user-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);color:#fff;
     padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600}
+  .item-wrap{ border-bottom:1px solid var(--line); }
+  .item-wrap:last-child{ border-bottom:none; }
+  .item-wrap .item{ border-bottom:none; }
+  .note-toggle.has{ color:var(--accent-dark); }
+  .note-wrap{ display:none; padding:0 6px 12px 34px; }
+  .note-wrap.open{ display:block; }
+  .note-box{ width:100%; min-height:56px; resize:vertical; border:1px solid var(--line); border-radius:9px;
+    padding:8px 10px; font-size:13px; background:#fff; font-family:inherit; }
 </style>
 </head>
 <body>
@@ -416,15 +424,24 @@ function renderChecklist(){
   }).join("");
 }
 function taskRow(t){
-  return `<div class="item ${t.done?"done":""}">
-    <div class="check ${t.done?"on":""}" onclick="toggleTask('${t.id}')">${t.done?"&#10003;":""}</div>
-    <span class="item-title">${esc(t.title)}</span>
-    ${t.due?`<span class="item-meta">${fmtDate(t.due)}</span>`:""}
-    <button class="icon-btn" onclick="delTask('${t.id}')" title="Delete">&#10005;</button>
+  return `<div class="item-wrap">
+    <div class="item ${t.done?"done":""}">
+      <div class="check ${t.done?"on":""}" onclick="toggleTask('${t.id}')">${t.done?"&#10003;":""}</div>
+      <span class="item-title">${esc(t.title)}</span>
+      ${t.due?`<span class="item-meta">${fmtDate(t.due)}</span>`:""}
+      <button class="icon-btn note-toggle ${t.notes?"has":""}" onclick="toggleNote(this)" title="Notes">&#128221;</button>
+      <button class="icon-btn" onclick="delTask('${t.id}')" title="Delete">&#10005;</button>
+    </div>
+    <div class="note-wrap ${t.notes?"open":""}">
+      <textarea class="note-box" placeholder="Add notes…" oninput="setTaskNote('${t.id}',this.value)">${esc(t.notes||"")}</textarea>
+    </div>
   </div>`;
 }
 function toggleTask(id){ const t=S.tasks.find(x=>x.id===id); if(t){t.done=!t.done;save();renderAll();} }
 function delTask(id){ S.tasks=S.tasks.filter(x=>x.id!==id); save(); renderAll(); }
+function toggleNote(btn){ const w=btn.closest(".item-wrap").querySelector(".note-wrap"); if(!w)return; const open=w.classList.toggle("open"); if(open){ const ta=w.querySelector("textarea"); if(ta) ta.focus(); } }
+function setTaskNote(id,val){ const t=S.tasks.find(x=>x.id===id); if(t){ t.notes=val; save(); } }
+function setEventTaskNote(eid,tid,val){ const ev=S.events.find(e=>e.id===eid); if(!ev)return; const t=(ev.tasks||[]).find(x=>x.id===tid); if(t){ t.notes=val; save(); } }
 
 /* ---------------- Render: budget ---------------- */
 function renderBudget(){
@@ -464,10 +481,16 @@ function renderEvents(){
       </div>
       <div class="event-body">
         <div class="list">${ts.map(t=>`
-          <div class="item ${t.done?"done":""}">
-            <div class="check ${t.done?"on":""}" onclick="toggleEventTask('${ev.id}','${t.id}')">${t.done?"&#10003;":""}</div>
-            <span class="item-title">${esc(t.title)}</span>
-            <button class="icon-btn" onclick="delEventTask('${ev.id}','${t.id}')">&#10005;</button>
+          <div class="item-wrap">
+            <div class="item ${t.done?"done":""}">
+              <div class="check ${t.done?"on":""}" onclick="toggleEventTask('${ev.id}','${t.id}')">${t.done?"&#10003;":""}</div>
+              <span class="item-title">${esc(t.title)}</span>
+              <button class="icon-btn note-toggle ${t.notes?"has":""}" onclick="toggleNote(this)" title="Notes">&#128221;</button>
+              <button class="icon-btn" onclick="delEventTask('${ev.id}','${t.id}')">&#10005;</button>
+            </div>
+            <div class="note-wrap ${t.notes?"open":""}">
+              <textarea class="note-box" placeholder="Add notes…" oninput="setEventTaskNote('${ev.id}','${t.id}',this.value)">${esc(t.notes||"")}</textarea>
+            </div>
           </div>`).join("")}</div>
         <div class="row" style="margin-top:10px">
           <input type="text" placeholder="Add a to-do for this event…" id="et_${ev.id}" onkeydown="if(event.key==='Enter')addEventTask('${ev.id}')" style="flex:1">
@@ -494,7 +517,9 @@ function renderGuests(){
     const tg=tag[g.rsvp]||tag.pending;
     return `<tr>
       <td>${esc(g.name)}</td>
-      <td><span class="mini">${esc(g.side||"")}</span></td>
+      <td><select class="rsvp-sel" onchange="setSide('${g.id}',this.value)" style="width:auto;padding:5px 8px">
+        ${[["","—"],["👰 Bride","👰 Bride"],["🤵 Groom","🤵 Groom"],["💕 Both / Shared","💕 Both"]].map(o=>`<option value="${esc(o[0])}" ${sideKeyword(g.side)===sideKeyword(o[0])?"selected":""}>${o[1]}</option>`).join("")}
+      </select></td>
       <td style="text-align:center">${esc(g.party||1)}</td>
       <td><span class="mini">${esc(g.meal||"")}</span></td>
       <td style="text-align:center"><div class="check ${g.invited?"on":""}" style="margin:0 auto" onclick="toggleInvite('${g.id}')" title="${g.invited?"Invite sent":"Mark invite sent"}">${g.invited?"&#10003;":""}</div></td>
@@ -511,6 +536,8 @@ function renderGuests(){
   document.getElementById("gSentBreak").textContent=`${sent} invite${sent===1?"":"s"} sent · ${S.guests.length-sent} to send`;
 }
 function setRsvp(id,v){ const g=S.guests.find(x=>x.id===id); g.rsvp=v; save(); renderAll(); }
+function sideKeyword(s){ s=(s||"").toLowerCase(); if(s.indexOf("both")>=0)return"both"; if(s.indexOf("groom")>=0)return"groom"; if(s.indexOf("bride")>=0)return"bride"; return""; }
+function setSide(id,v){ const g=S.guests.find(x=>x.id===id); if(g){ g.side=v; save(); renderAll(); } }
 function toggleInvite(id){ const g=S.guests.find(x=>x.id===id); g.invited=!g.invited; save(); renderAll(); }
 function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
 
