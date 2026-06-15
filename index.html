@@ -331,6 +331,7 @@
 "use strict";
 /* ---------------- State ---------------- */
 const KEY = "weddingPlanner.v1";
+let guestEventFilter = null;
 const blank = {
   settings:{ partnerA:"", partnerB:"", date:"", venue:"", budget:0, theme:"rose", currency:"USD", pinA:"", pinB:"" },
   tasks:[], budget:[], events:[], guests:[]
@@ -548,6 +549,7 @@ function renderGuests(){
   const sort=sEl?sEl.value:"name";
   let list=S.guests.slice();
   if(q) list=list.filter(g=>(g.name||"").toLowerCase().includes(q));
+  if(guestEventFilter) list=list.filter(g=>guestInvitedTo(g,guestEventFilter));
   const rsvpOrder={yes:0,maybe:1,pending:2,no:3};
   list.sort((a,b)=>{
     if(sort==="side"){ const d=(sideKeyword(a.side)||"zz").localeCompare(sideKeyword(b.side)||"zz"); if(d) return d; }
@@ -615,14 +617,31 @@ function printGuests(){
 }
 function renderEventCounts(){
   const el=document.getElementById("guestEventCounts"); if(!el) return;
-  if(!S.events||!S.events.length){ el.style.display="none"; return; }
+  if(!S.events||!S.events.length){ el.style.display="none"; guestEventFilter=null; return; }
   el.style.display="block";
+  // drop the filter if the event no longer exists
+  if(guestEventFilter && !S.events.some(e=>e.id===guestEventFilter)) guestEventFilter=null;
   const pills=S.events.map(ev=>{
     const heads=S.guests.filter(g=>guestInvitedTo(g,ev.id)).reduce((s,g)=>s+(Number(g.party)||1),0);
     const yes=S.guests.filter(g=>guestInvitedTo(g,ev.id)&&g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
-    return `<span class="pill" style="background:var(--accent-soft);color:var(--accent-dark);margin:4px 8px 4px 0;font-size:13px">${esc(ev.name)}: <b>${heads}</b> invited · ${yes} yes</span>`;
+    const active=guestEventFilter===ev.id;
+    const style=active
+      ? "background:var(--accent);color:#fff;margin:4px 8px 4px 0;font-size:13px;cursor:pointer;box-shadow:0 0 0 2px var(--accent-soft)"
+      : "background:var(--accent-soft);color:var(--accent-dark);margin:4px 8px 4px 0;font-size:13px;cursor:pointer";
+    const title=active?"Click to clear filter":"Click to show only these guests";
+    return `<span class="pill" style="${style}" onclick="filterGuestsByEvent('${ev.id}')" title="${title}">${esc(ev.name)}: <b>${heads}</b> invited · ${yes} yes${active?" \u2715":""}</span>`;
   }).join("");
-  el.innerHTML=`<div class="stat-lab" style="margin-bottom:8px">Headcount per event</div>${pills}`;
+  const clearChip=guestEventFilter
+    ? `<button class="btn ghost sm" onclick="filterGuestsByEvent(null)" style="margin-left:4px">Show all events</button>`
+    : "";
+  el.innerHTML=`<div class="stat-lab" style="margin-bottom:8px">Headcount per event ${clearChip}</div>${pills}`;
+}
+function filterGuestsByEvent(eid){
+  guestEventFilter = (eid && guestEventFilter===eid) ? null : (eid||null);
+  renderGuests();
+  // scroll to guest table so the user sees the filtered list
+  const tbl=document.getElementById("guestRows");
+  if(tbl) tbl.closest(".card").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function toggleGuestRow(btn){ const tr=btn.closest("tr"); const det=tr.nextElementSibling; if(det&&det.classList.contains("guest-detail")){ const show=det.style.display==="none"; det.style.display=show?"table-row":"none"; btn.innerHTML=show?"&#9662;":"&#9656;"; } }
 function setGuestEvent(id,eid,checked){ const g=S.guests.find(x=>x.id===id); if(!g)return; g.events=g.events||{}; g.events[eid]=checked; save(); renderEventCounts(); }
