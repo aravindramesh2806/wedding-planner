@@ -180,6 +180,21 @@
   .note-wrap.open{ display:block; }
   .note-box{ width:100%; min-height:56px; resize:vertical; border:1px solid var(--line); border-radius:9px;
     padding:8px 10px; font-size:13px; background:#fff; font-family:inherit; }
+  /* Guests print + toolbar */
+  .gl-tools input[type="text"]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
+  .gl-tools select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
+  @media print{
+    body.print-guests *{visibility:hidden}
+    body.print-guests .panel[data-panel="guests"],
+    body.print-guests .panel[data-panel="guests"] *{visibility:visible}
+    body.print-guests .panel[data-panel="guests"]{position:absolute;left:0;top:0;width:100%}
+    body.print-guests .gl-tools,
+    body.print-guests .section-head .row,
+    body.print-guests #guestEventCounts,
+    body.print-guests .icon-btn,
+    body.print-guests select{display:none !important}
+    body.print-guests .check{border:1px solid #999 !important;background:#fff !important;color:#000 !important}
+  }
 </style>
 </head>
 <body>
@@ -283,6 +298,19 @@
       <div class="card"><div class="stat" id="gPending">0</div><div class="stat-lab">Awaiting reply</div></div>
     </div>
     <div id="guestEventCounts" class="card" style="margin-bottom:16px;display:none"></div>
+    <div class="card gl-tools" style="margin-bottom:16px">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="guestSearch" type="text" placeholder="Search by name…" oninput="renderGuests()" style="flex:1;min-width:180px">
+        <select id="guestSort" onchange="renderGuests()" style="width:auto">
+          <option value="name">Sort: Name</option>
+          <option value="side">Sort: Side</option>
+          <option value="rsvp">Sort: RSVP</option>
+        </select>
+        <button class="btn ghost" onclick="exportGuestsCsv()" title="Download CSV">&#11015; CSV</button>
+        <button class="btn ghost" onclick="printGuests()" title="Print">&#128424; Print</button>
+      </div>
+      <div id="guestMealSummary" style="margin-top:10px"></div>
+    </div>
     <div class="card">
       <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th style="text-align:center">Stay</th><th>RSVP</th><th></th></tr></thead>
       <tbody id="guestRows"></tbody></table>
@@ -515,7 +543,18 @@ function renderGuests(){
   const rows=document.getElementById("guestRows");
   document.getElementById("guestEmpty").style.display=S.guests.length?"none":"block";
   const tag={yes:["t-yes","Yes"],no:["t-no","No"],maybe:["t-maybe","Maybe"],pending:["t-pending","Pending"]};
-  rows.innerHTML=S.guests.map(g=>{
+  const qEl=document.getElementById("guestSearch"); const sEl=document.getElementById("guestSort");
+  const q=(qEl?qEl.value:"").trim().toLowerCase();
+  const sort=sEl?sEl.value:"name";
+  let list=S.guests.slice();
+  if(q) list=list.filter(g=>(g.name||"").toLowerCase().includes(q));
+  const rsvpOrder={yes:0,maybe:1,pending:2,no:3};
+  list.sort((a,b)=>{
+    if(sort==="side"){ const d=(sideKeyword(a.side)||"zz").localeCompare(sideKeyword(b.side)||"zz"); if(d) return d; }
+    else if(sort==="rsvp"){ const d=((rsvpOrder[a.rsvp]??9)-(rsvpOrder[b.rsvp]??9)); if(d) return d; }
+    return (a.name||"").localeCompare(b.name||"");
+  });
+  rows.innerHTML=list.map(g=>{
     const tg=tag[g.rsvp]||tag.pending;
     const evChecks=(S.events&&S.events.length)
       ? S.events.map(ev=>`<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;margin:4px 16px 4px 0"><input type="checkbox" ${guestInvitedTo(g,ev.id)?"checked":""} onchange="setGuestEvent('${g.id}','${ev.id}',this.checked)"> ${esc(ev.name)}</label>`).join("")
@@ -543,7 +582,36 @@ function renderGuests(){
   document.getElementById("gPending").textContent=S.guests.filter(g=>g.rsvp==="pending").length;
   const sent=S.guests.filter(g=>g.invited).length;
   document.getElementById("gSentBreak").textContent=`${sent} sent · ${S.guests.length-sent} to send`+((S.guests.filter(g=>g.accommodation).length)?` · ${S.guests.filter(g=>g.accommodation).length} need a room`:"");
+  renderMealSummary();
   renderEventCounts();
+}
+function renderMealSummary(){
+  const el=document.getElementById("guestMealSummary"); if(!el) return;
+  const counts={};
+  S.guests.forEach(g=>{ const m=((g.meal||"").trim())||"—"; counts[m]=(counts[m]||0)+(Number(g.party)||1); });
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length || (entries.length===1 && entries[0][0]==="—")){ el.innerHTML=""; return; }
+  el.innerHTML=`<span class="stat-lab" style="margin-right:8px">Meals:</span>`+
+    entries.map(([m,c])=>`<span class="pill" style="background:var(--accent-soft);color:var(--accent-dark);margin:2px 6px 2px 0">${esc(m)}: <b>${c}</b></span>`).join("");
+}
+function exportGuestsCsv(){
+  const headers=["Name","Side","Party","Meal","Invited","Accommodation","RSVP"];
+  const csvEsc=v=>{ const s=String(v==null?"":v); return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s; };
+  const lines=[headers.join(",")];
+  S.guests.forEach(g=>{
+    lines.push([g.name||"", g.side||"", g.party||1, g.meal||"", g.invited?"Yes":"No", g.accommodation?"Yes":"No", g.rsvp||"pending"].map(csvEsc).join(","));
+  });
+  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="guest-list.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function printGuests(){
+  document.body.classList.add("print-guests");
+  const cleanup=()=>{ document.body.classList.remove("print-guests"); window.removeEventListener("afterprint",cleanup); };
+  window.addEventListener("afterprint",cleanup);
+  setTimeout(()=>window.print(),50);
 }
 function renderEventCounts(){
   const el=document.getElementById("guestEventCounts"); if(!el) return;
