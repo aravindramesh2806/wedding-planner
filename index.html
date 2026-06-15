@@ -282,6 +282,7 @@
       <div class="card"><div class="stat" id="gConfirmed">0</div><div class="stat-lab">Confirmed (heads)</div></div>
       <div class="card"><div class="stat" id="gPending">0</div><div class="stat-lab">Awaiting reply</div></div>
     </div>
+    <div id="guestEventCounts" class="card" style="margin-bottom:16px;display:none"></div>
     <div class="card">
       <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th style="text-align:center">Stay</th><th>RSVP</th><th></th></tr></thead>
       <tbody id="guestRows"></tbody></table>
@@ -509,14 +510,18 @@ function toggleEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); const 
 function delEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); ev.tasks=ev.tasks.filter(x=>x.id!==tid); save(); renderAll(); }
 
 /* ---------------- Render: guests ---------------- */
+function guestInvitedTo(g,eid){ if(!g.events) return true; if(g.events[eid]===undefined) return true; return !!g.events[eid]; }
 function renderGuests(){
   const rows=document.getElementById("guestRows");
   document.getElementById("guestEmpty").style.display=S.guests.length?"none":"block";
   const tag={yes:["t-yes","Yes"],no:["t-no","No"],maybe:["t-maybe","Maybe"],pending:["t-pending","Pending"]};
   rows.innerHTML=S.guests.map(g=>{
     const tg=tag[g.rsvp]||tag.pending;
+    const evChecks=(S.events&&S.events.length)
+      ? S.events.map(ev=>`<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;margin:4px 16px 4px 0"><input type="checkbox" ${guestInvitedTo(g,ev.id)?"checked":""} onchange="setGuestEvent('${g.id}','${ev.id}',this.checked)"> ${esc(ev.name)}</label>`).join("")
+      : `<span class="muted" style="font-size:13px">Add events in the Events tab to assign guests.</span>`;
     return `<tr>
-      <td>${esc(g.name)}</td>
+      <td><button class="icon-btn" onclick="toggleGuestRow(this)" title="Which events?" style="margin-right:2px">&#9656;</button>${esc(g.name)}</td>
       <td><select class="rsvp-sel" onchange="setSide('${g.id}',this.value)" style="width:auto;padding:5px 8px">
         ${[["","—"],["👰 Bride","👰 Bride"],["🤵 Groom","🤵 Groom"],["💕 Both / Shared","💕 Both"]].map(o=>`<option value="${esc(o[0])}" ${sideKeyword(g.side)===sideKeyword(o[0])?"selected":""}>${o[1]}</option>`).join("")}
       </select></td>
@@ -528,14 +533,31 @@ function renderGuests(){
         ${["pending","yes","no","maybe"].map(o=>`<option value="${o}" ${g.rsvp===o?"selected":""}>${tag[o][1]}</option>`).join("")}
       </select></td>
       <td style="text-align:right"><button class="icon-btn" onclick="delGuest('${g.id}')">&#10005;</button></td>
-    </tr>`;
+    </tr>
+    <tr class="guest-detail" style="display:none"><td colspan="8" style="background:var(--accent-soft);padding:10px 16px">
+      <span class="stat-lab" style="margin-right:10px">Invited to</span>${evChecks}
+    </td></tr>`;
   }).join("");
   document.getElementById("gInvited").textContent=S.guests.length;
   document.getElementById("gConfirmed").textContent=S.guests.filter(g=>g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
   document.getElementById("gPending").textContent=S.guests.filter(g=>g.rsvp==="pending").length;
   const sent=S.guests.filter(g=>g.invited).length;
   document.getElementById("gSentBreak").textContent=`${sent} sent · ${S.guests.length-sent} to send`+((S.guests.filter(g=>g.accommodation).length)?` · ${S.guests.filter(g=>g.accommodation).length} need a room`:"");
+  renderEventCounts();
 }
+function renderEventCounts(){
+  const el=document.getElementById("guestEventCounts"); if(!el) return;
+  if(!S.events||!S.events.length){ el.style.display="none"; return; }
+  el.style.display="block";
+  const pills=S.events.map(ev=>{
+    const heads=S.guests.filter(g=>guestInvitedTo(g,ev.id)).reduce((s,g)=>s+(Number(g.party)||1),0);
+    const yes=S.guests.filter(g=>guestInvitedTo(g,ev.id)&&g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
+    return `<span class="pill" style="background:var(--accent-soft);color:var(--accent-dark);margin:4px 8px 4px 0;font-size:13px">${esc(ev.name)}: <b>${heads}</b> invited · ${yes} yes</span>`;
+  }).join("");
+  el.innerHTML=`<div class="stat-lab" style="margin-bottom:8px">Headcount per event</div>${pills}`;
+}
+function toggleGuestRow(btn){ const tr=btn.closest("tr"); const det=tr.nextElementSibling; if(det&&det.classList.contains("guest-detail")){ const show=det.style.display==="none"; det.style.display=show?"table-row":"none"; btn.innerHTML=show?"&#9662;":"&#9656;"; } }
+function setGuestEvent(id,eid,checked){ const g=S.guests.find(x=>x.id===id); if(!g)return; g.events=g.events||{}; g.events[eid]=checked; save(); renderEventCounts(); }
 function setRsvp(id,v){ const g=S.guests.find(x=>x.id===id); g.rsvp=v; save(); renderAll(); }
 function sideKeyword(s){ s=(s||"").toLowerCase(); if(s.indexOf("both")>=0)return"both"; if(s.indexOf("groom")>=0)return"groom"; if(s.indexOf("bride")>=0)return"bride"; return""; }
 function setSide(id,v){ const g=S.guests.find(x=>x.id===id); if(g){ g.side=v; save(); renderAll(); } }
