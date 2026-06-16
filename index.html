@@ -183,17 +183,21 @@
   /* Guests print + toolbar */
   .gl-tools input[type="text"]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
   .gl-tools select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit}
+  .print-only{display:none}
   @media print{
-    body.print-guests *{visibility:hidden}
-    body.print-guests .panel[data-panel="guests"],
-    body.print-guests .panel[data-panel="guests"] *{visibility:visible}
-    body.print-guests .panel[data-panel="guests"]{position:absolute;left:0;top:0;width:100%}
+    body.print-guests > *{display:none !important}
+    body.print-guests > .wrap{display:block !important}
+    body.print-guests .wrap > .panel{display:none !important}
+    body.print-guests .wrap > .panel[data-panel="guests"]{display:block !important}
     body.print-guests .gl-tools,
     body.print-guests .section-head .row,
     body.print-guests #guestEventCounts,
     body.print-guests .icon-btn,
     body.print-guests select{display:none !important}
+    body.print-guests .print-only{display:inline !important}
     body.print-guests .check{border:1px solid #999 !important;background:#fff !important;color:#000 !important}
+    body.print-guests .grid.cols-3{break-inside:avoid}
+    body.print-guests table{font-size:12px}
   }
 </style>
 </head>
@@ -359,7 +363,6 @@ const blank = {
   tasks:[], budget:[], events:[], guests:[], vendors:[]
 };
 let S = load();
-if(!S.vendors) S.vendors=[];
 
 function load(){
   try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(JSON.parse(JSON.stringify(blank)), JSON.parse(r)); }
@@ -616,7 +619,7 @@ function addVendor(){
     cost:Number(val("v_cost"))||0,paid:Number(val("v_paid"))||0,notes:document.getElementById("v_notes")?.value||""});
   save(); closeModal(); renderAll();
 }
-function setVendorStatus(id,v){ const x=(S.vendors||[]).find(y=>y.id===id); if(!x) return; x.status=v; if(v==="paid" && (!Number(x.paid)||Number(x.paid)<Number(x.cost))){ x.paid=Number(x.cost)||0; } save(); renderAll(); }
+function setVendorStatus(id,v){ const x=(S.vendors||[]).find(y=>y.id===id); if(!x) return; x.status=v; if(v==="paid" && !Number(x.paid)){ x.paid=Number(x.cost)||0; } save(); renderAll(); }
 function setVendorNotes(id,v){ const x=(S.vendors||[]).find(y=>y.id===id); if(!x) return; x.notes=v; save(); }
 function delVendor(id){ if(!confirm("Delete this vendor?")) return; S.vendors=(S.vendors||[]).filter(x=>x.id!==id); save(); renderAll(); }
 
@@ -689,14 +692,14 @@ function renderGuests(){
       <td><button class="icon-btn" onclick="toggleGuestRow(this)" title="Which events?" style="margin-right:2px">&#9656;</button>${esc(g.name)}</td>
       <td><select class="rsvp-sel" onchange="setSide('${g.id}',this.value)" style="width:auto;padding:5px 8px">
         ${[["","—"],["👰 Bride","👰 Bride"],["🤵 Groom","🤵 Groom"],["💕 Both / Shared","💕 Both"]].map(o=>`<option value="${esc(o[0])}" ${sideKeyword(g.side)===sideKeyword(o[0])?"selected":""}>${o[1]}</option>`).join("")}
-      </select></td>
+      </select><span class="print-only">${esc(g.side||"—")}</span></td>
       <td style="text-align:center">${esc(g.party||1)}</td>
       <td><span class="mini">${esc(g.meal||"")}</span></td>
-      <td style="text-align:center"><div class="check ${g.invited?"on":""}" style="margin:0 auto" onclick="toggleInvite('${g.id}')" title="${g.invited?"Invite sent":"Mark invite sent"}">${g.invited?"&#10003;":""}</div></td>
-      <td style="text-align:center"><div class="check ${g.accommodation?"on":""}" style="margin:0 auto" onclick="toggleStay('${g.id}')" title="${g.accommodation?"Needs a room":"No room needed"}">${g.accommodation?"&#10003;":""}</div></td>
+      <td style="text-align:center"><div class="check ${g.invited?"on":""}" style="margin:0 auto" onclick="toggleInvite('${g.id}')" title="${g.invited?"Invite sent":"Mark invite sent"}">${g.invited?"&#10003;":""}</div><span class="print-only">${g.invited?"Yes":"No"}</span></td>
+      <td style="text-align:center"><div class="check ${g.accommodation?"on":""}" style="margin:0 auto" onclick="toggleStay('${g.id}')" title="${g.accommodation?"Needs a room":"No room needed"}">${g.accommodation?"&#10003;":""}</div><span class="print-only">${g.accommodation?"Yes":"No"}</span></td>
       <td><select class="rsvp-sel" onchange="setRsvp('${g.id}',this.value)" style="width:auto;padding:5px 8px">
         ${["pending","yes","no","maybe"].map(o=>`<option value="${o}" ${g.rsvp===o?"selected":""}>${tag[o][1]}</option>`).join("")}
-      </select></td>
+      </select><span class="print-only">${tg[1]}</span></td>
       <td style="text-align:right"><button class="icon-btn" onclick="delGuest('${g.id}')">&#10005;</button></td>
     </tr>
     <tr class="guest-detail" style="display:none"><td colspan="8" style="background:var(--accent-soft);padding:10px 16px">
@@ -727,7 +730,7 @@ function exportGuestsCsv(){
   S.guests.forEach(g=>{
     lines.push([g.name||"", g.side||"", g.party||1, g.meal||"", g.invited?"Yes":"No", g.accommodation?"Yes":"No", g.rsvp||"pending"].map(csvEsc).join(","));
   });
-  const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
+  const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a"); a.href=url; a.download="guest-list.csv";
   document.body.appendChild(a); a.click(); a.remove();
@@ -955,6 +958,7 @@ function loadSample(){
     ["Aunt Rosa","Groom",1,"Veg",true,"maybe"],["Chris & Dana","Groom",2,"Fish",false,"yes"],
     ["Old college crew","Bride",3,"",false,"pending"],["Grandma June","Bride",1,"Veg",false,"yes"],
   ].map(([name,side,party,meal,invited,rsvp])=>({id:uid(),name,side,party,meal,invited,rsvp}));
+  S.vendors=[];
   save(); applyTheme(S.settings.theme); renderAll();
   switchTab("dashboard");
 }
