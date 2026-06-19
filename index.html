@@ -299,6 +299,21 @@
       <div class="card"><div class="stat" id="dGuests">0</div><div class="stat-lab">Guests confirmed</div>
         <div class="stat-lab" id="dGuestsBreak" style="margin-top:6px"></div></div>
     </div>
+    <div class="card" id="dGuestLinkCard" style="margin-top:16px;display:none">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <h2 style="font-size:17px;margin-bottom:6px">&#128156; Guest invite link</h2>
+          <p class="muted" style="font-size:13px;margin:0">Share this with anyone you want at the wedding &mdash; they sign in, you approve.</p>
+        </div>
+        <div class="row" style="gap:6px">
+          <button class="btn ghost sm" onclick="dCopyGuestLink()" id="dGuestLinkCopyBtn">&#128203; Copy</button>
+          <button class="btn sm" onclick="dOpenGuestLink()">&#8599; Preview</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <input type="text" id="dGuestLinkInput" readonly onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:13px">
+      </div>
+    </div>
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card">
         <h2>Up next</h2>
@@ -559,6 +574,9 @@ function renderCountdown(){
 
 /* ---------------- Render: dashboard ---------------- */
 function renderDashboard(){
+  // Surface the guest invite link on the dashboard (lazy-loads via portal cache)
+  dRenderGuestLink();
+  if(CLOUD && cloudToken) ppMaybeLoad();
   const done=S.tasks.filter(t=>t.done).length, total=S.tasks.length;
   document.getElementById("dTasks").textContent=`${done}/${total}`;
   document.getElementById("dTasksBar").style.width=(total?done/total*100:0)+"%";
@@ -972,6 +990,7 @@ function ppRenderEverything(){
   // Link
   const i = document.getElementById("ppLinkInput");
   if(i) i.value = ppGuestLinkUrl();
+  dRenderGuestLink();
   // Approval inbox
   const pending = PP.guests.filter(g=>g.status==="pending" && g.signin_method!=="pre_added");
   const inbox = document.getElementById("ppApprovalCard");
@@ -1054,6 +1073,34 @@ function ppCopyLink(){
   navigator.clipboard?.writeText(inp.value).catch(()=>{});
   const b = document.getElementById("ppCopyBtn"); const orig = b.textContent;
   b.textContent = "✓ Copied"; setTimeout(()=>b.textContent=orig,1500);
+}
+
+function dRenderGuestLink(){
+  const card = document.getElementById("dGuestLinkCard");
+  const inp = document.getElementById("dGuestLinkInput");
+  if(!card || !inp) return;
+  if(CLOUD && cloudToken && PP.entryToken){
+    inp.value = ppGuestLinkUrl();
+    card.style.display = "block";
+  } else {
+    card.style.display = "none";
+  }
+}
+
+function dCopyGuestLink(){
+  const inp = document.getElementById("dGuestLinkInput");
+  if(!inp || !inp.value){ alert("Link not loaded yet. Try again in a second."); return; }
+  inp.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  navigator.clipboard?.writeText(inp.value).catch(()=>{});
+  const b = document.getElementById("dGuestLinkCopyBtn"); const orig = b.textContent;
+  b.textContent = "✓ Copied"; setTimeout(()=>b.textContent=orig,1500);
+}
+
+function dOpenGuestLink(){
+  const inp = document.getElementById("dGuestLinkInput");
+  if(!inp || !inp.value){ alert("Link not loaded yet. Try again in a second."); return; }
+  window.open(inp.value, "_blank");
 }
 
 async function ppApprove(id, decision){
