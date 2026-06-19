@@ -199,6 +199,55 @@
     body.print-guests .grid.cols-3{break-inside:avoid}
     body.print-guests table{font-size:12px}
   }
+  /* ------- Guest Portal ------- */
+  #guestPortal{min-height:100vh;background:var(--bg)}
+  .gp-top{position:sticky;top:0;z-index:50;background:linear-gradient(160deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+  .gp-top-inner{max-width:780px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+  .gp-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+  .gp-heart{font-size:22px}
+  .gp-actions{display:flex;gap:8px}
+  .gp-icon-btn{background:rgba(255,255,255,.18);border:0;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}
+  .gp-icon-btn:hover{background:rgba(255,255,255,.28)}
+  .gp-badge{position:absolute;top:-2px;right:-2px;background:#e11d48;color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700}
+  .gp-tabs{max-width:780px;margin:0 auto;padding:0 10px;display:flex;gap:4px;overflow-x:auto}
+  .gp-tab{background:transparent;border:0;color:rgba(255,255,255,.78);padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
+  .gp-tab.active{color:#fff;border-bottom-color:#fff}
+  .gp-wrap{max-width:780px;margin:0 auto;padding:18px}
+  .gp-card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  .gp-card h3{margin:0 0 8px;font-size:17px}
+  .gp-event{background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border-left:5px solid var(--accent)}
+  .gp-event-head{padding:14px 18px 8px}
+  .gp-event-title{font-size:18px;font-weight:700;margin:0 0 4px}
+  .gp-event-when{color:var(--muted);font-size:13px}
+  .gp-event-body{padding:6px 18px 16px;font-size:14px}
+  .gp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  .gp-row:first-child{border-top:0}
+  .gp-row .k{color:var(--muted);font-size:13px}
+  .gp-event-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .gp-event-actions .btn{flex:1;min-width:130px;justify-content:center}
+  .gp-empty{text-align:center;padding:40px 20px;color:var(--muted)}
+  .gp-empty .big{font-size:48px;margin-bottom:10px}
+  .gp-countdown{text-align:center;padding:22px 16px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;border-radius:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .gp-countdown .days{font-size:48px;font-weight:800;line-height:1;margin:6px 0}
+  .gp-countdown .lab{font-size:13px;opacity:.85;letter-spacing:.06em;text-transform:uppercase}
+  .gp-alert{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
+  .gp-alert.unread{background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, var(--card)) 0%, var(--card) 60%)}
+  .gp-alert h4{margin:0 0 4px;font-size:15px}
+  .gp-alert .when{font-size:12px;color:var(--muted)}
+  .gp-rsvp{display:flex;gap:6px}
+  .gp-rsvp button{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;font-size:13px}
+  .gp-rsvp button.yes.on{background:#10b981;color:#fff;border-color:#10b981}
+  .gp-rsvp button.no.on{background:#94a3b8;color:#fff;border-color:#94a3b8}
+  .gp-pending{text-align:center;padding:40px 24px}
+  .gp-pending .emoji{font-size:48px;margin-bottom:10px}
+  .gp-google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;font-weight:600;font-size:15px;color:#1f2937;margin-bottom:10px}
+  .gp-google-btn:hover{background:#f8fafc}
+  .gp-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
+  .gp-divider::before,.gp-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .gp-signin-tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  .gp-signin-tabs button{background:transparent;border:0;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:2px solid transparent}
+  .gp-signin-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  @media(max-width:520px){.gp-event-actions .btn{min-width:0;flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -221,6 +270,21 @@
 <div class="fs" id="lock"><div class="fs-card" id="lockCard"></div></div>
 <!-- Cloud auth (shared mode) -->
 <div class="fs" id="cloudauth"><div class="fs-card" id="caCard"></div></div>
+
+<!-- Guest portal (shared mode) -->
+<div id="guestPortal" style="display:none">
+  <header class="gp-top">
+    <div class="gp-top-inner">
+      <div class="gp-brand"><span class="gp-heart">💍</span><span id="gpCoupleName">Wedding</span></div>
+      <div class="gp-actions">
+        <button class="gp-icon-btn" id="gpAlertsBtn" onclick="gpShowTab('alerts')" title="Alerts">🔔<span id="gpUnread" class="gp-badge" style="display:none">0</span></button>
+        <button class="gp-icon-btn" onclick="gpSignOut()" title="Sign out">↩</button>
+      </div>
+    </div>
+    <nav class="gp-tabs" id="gpTabs"></nav>
+  </header>
+  <main class="gp-wrap" id="gpMain"></main>
+</div>
 
 <nav class="tabs" id="tabs"></nav>
 
@@ -343,6 +407,65 @@
       <div class="empty" id="vendorEmpty" style="display:none"><div class="big">&#127894;</div>No vendors yet. Track photographers, caterers, venue, decor, and more.</div>
     </div>
   </section>
+
+  <!-- GUEST PORTAL (couple-side admin) -->
+  <section class="panel" data-panel="portal">
+    <div class="section-head">
+      <h2>Guest portal</h2>
+      <div class="row">
+        <button class="btn ghost" onclick="ppCopyLink()" id="ppCopyBtn">📋 Copy invite link</button>
+        <button class="btn" onclick="ppOpenAlertModal()">📣 Send alert</button>
+      </div>
+    </div>
+
+    <div id="ppCloudOnly" class="card" style="display:none;margin-bottom:16px">
+      <div class="empty"><div class="big">☁️</div>Guest portal requires cloud mode. Sign in / sign up from the live URL to enable it.</div>
+    </div>
+
+    <div id="ppMain">
+      <div class="grid cols-3" style="margin-bottom:16px">
+        <div class="card"><div class="stat" id="ppStatTotal">0</div><div class="stat-lab">Guests signed in</div></div>
+        <div class="card"><div class="stat" id="ppStatApproved">0</div><div class="stat-lab">Approved</div></div>
+        <div class="card"><div class="stat" id="ppStatPending">0</div><div class="stat-lab">Pending approval</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin:0 0 8px">Invite link for guests</h3>
+        <p class="muted" style="font-size:13px;margin:0 0 10px">Share this with anyone you want at the wedding. They can sign in with Google, name + phone, or email — and you approve new sign-ups.</p>
+        <div class="field"><input type="text" id="ppLinkInput" readonly onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:13px"></div>
+      </div>
+
+      <div class="card" id="ppApprovalCard" style="margin-bottom:16px;display:none">
+        <h3 style="margin:0 0 8px">Approval inbox</h3>
+        <div id="ppPendingList"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin:0 0 8px">Things to know (shared with all guests)</h3>
+        <textarea id="ppKnowGeneral" rows="3" placeholder="e.g. Dress modestly for the ceremony. Wedding favors will be handed out at the reception. Outside food not allowed at the venue." style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px" oninput="ppDebouncedSaveKnow()"></textarea>
+        <div class="muted" style="font-size:12px;margin-top:4px" id="ppKnowSavedFlag"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <h3 style="margin:0">All guests</h3>
+          <div class="row">
+            <button class="btn ghost sm" onclick="ppOpenCsvModal()">⬆ Upload CSV</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Contact</th><th>Sign-in</th><th>Status</th><th>RSVPs</th><th>Last seen</th><th></th></tr></thead>
+          <tbody id="ppGuestRows"></tbody>
+        </table>
+        <div class="empty" id="ppGuestEmpty" style="display:none"><div class="big">👥</div>No guests have signed in yet. Share the invite link above.</div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px">Sent alerts</h3>
+        <div id="ppAlertHistory"></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div class="footnote">All data is saved privately in this browser. Free to use &amp; host. &#9825;</div>
@@ -360,7 +483,8 @@ const KEY = "weddingPlanner.v1";
 let guestEventFilter = null;
 const blank = {
   settings:{ partnerA:"", partnerB:"", date:"", venue:"", budget:0, theme:"rose", currency:"USD", pinA:"", pinB:"" },
-  tasks:[], budget:[], events:[], guests:[], vendors:[]
+  tasks:[], budget:[], events:[], guests:[], vendors:[],
+  know_before_general:""
 };
 let S = load();
 
@@ -396,7 +520,7 @@ function applyTheme(key){
 }
 
 /* ---------------- Tabs ---------------- */
-const TABS = [["dashboard","Dashboard"],["checklist","Checklist"],["budget","Budget"],["events","Events"],["guests","Guests"],["vendors","Vendors"]];
+const TABS = [["dashboard","Dashboard"],["checklist","Checklist"],["budget","Budget"],["events","Events"],["guests","Guests"],["vendors","Vendors"],["portal","Guest portal"]];
 function buildTabs(){
   document.getElementById("tabs").innerHTML = TABS.map(([k,l],i)=>
     `<button class="tab${i===0?" active":""}" data-tab="${k}" onclick="switchTab('${k}')">${l}</button>`).join("");
@@ -634,6 +758,7 @@ function renderEvents(){
         <div style="flex:1"><div class="et">${esc(ev.name)}</div>
           <div class="item-meta">${ev.date?fmtDate(ev.date):"No date"}${ev.time?" · "+esc(ev.time):""}${ev.venue?" · "+esc(ev.venue):""}</div></div>
         <span class="pill" style="background:var(--accent-soft);color:var(--accent-dark)">${dn}/${ts.length} done</span>
+        <button class="icon-btn" onclick="openEventModal('${ev.id}')" title="Edit event">&#9998;</button>
         <button class="icon-btn" onclick="delEvent('${ev.id}')" title="Delete event">&#10005;</button>
       </div>
       <div class="event-body">
@@ -780,7 +905,268 @@ function toggleStay(id){ const g=S.guests.find(x=>x.id===id); g.accommodation=!g
 function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
 
 /* ---------------- Master render ---------------- */
-function renderAll(){ renderHeader(); renderDashboard(); renderChecklist(); renderBudget(); renderEvents(); renderGuests(); renderVendors(); }
+function renderAll(){ renderHeader(); renderDashboard(); renderChecklist(); renderBudget(); renderEvents(); renderGuests(); renderVendors(); renderPortal(); }
+
+/* ---------------- Portal (couple-side admin) ---------------- */
+let PP = { entryToken:null, guests:[], totals:{}, alerts:[], lastLoad:0, pollT:null };
+
+function renderPortal(){
+  const cloudMode = (typeof CLOUD!=="undefined") && CLOUD && cloudToken;
+  const main = document.getElementById("ppMain");
+  const only = document.getElementById("ppCloudOnly");
+  if(!main) return;
+  if(!cloudMode){
+    only.style.display = "block";
+    main.style.display = "none";
+    return;
+  }
+  only.style.display = "none";
+  main.style.display = "block";
+  // Reflect the current "things to know" general text from S.data (saved under key)
+  const t = document.getElementById("ppKnowGeneral");
+  if(t && document.activeElement !== t) t.value = (S.know_before_general||"");
+  // Lazy-load on first render in this tab
+  ppMaybeLoad();
+}
+
+function ppEnsureLoaded(force){
+  if(!CLOUD || !cloudToken) return Promise.resolve();
+  const stale = (Date.now() - PP.lastLoad) > 4000;
+  if(!force && !stale && PP.entryToken) return Promise.resolve();
+  return Promise.all([ ppLoadEntryToken(), ppLoadGuests(), ppLoadAlertHistory() ])
+    .then(()=>{ PP.lastLoad = Date.now(); ppRenderEverything(); });
+}
+function ppMaybeLoad(){
+  ppEnsureLoaded().catch(e=>{ console.warn("portal load failed", e); });
+}
+
+async function ppLoadEntryToken(){
+  try{
+    const r = await rpc("wp_get_guest_entry_token", {p_couple_token: cloudToken});
+    if(r && r.guest_entry_token){ PP.entryToken = r.guest_entry_token; }
+  }catch(e){}
+}
+async function ppLoadGuests(){
+  try{
+    const r = await rpc("wp_admin_list_guests", {p_couple_token: cloudToken});
+    if(r && !r.error){ PP.guests = r.guests||[]; PP.totals = r.totals||{}; }
+  }catch(e){}
+}
+async function ppLoadAlertHistory(){
+  try{
+    const r = await rpc("wp_admin_list_alerts", {p_couple_token: cloudToken});
+    if(r && !r.error){ PP.alerts = r.alerts||[]; }
+  }catch(e){}
+}
+
+function ppGuestLinkUrl(){
+  const o=location.origin; const base=(o&&o!=="null")? o+location.pathname : "(your site URL)";
+  return base + "#g=" + (PP.entryToken||"");
+}
+
+function ppRenderEverything(){
+  // Stats
+  document.getElementById("ppStatTotal").textContent    = PP.totals.total||0;
+  document.getElementById("ppStatApproved").textContent = PP.totals.approved||0;
+  document.getElementById("ppStatPending").textContent  = PP.totals.pending||0;
+  // Link
+  const i = document.getElementById("ppLinkInput");
+  if(i) i.value = ppGuestLinkUrl();
+  // Approval inbox
+  const pending = PP.guests.filter(g=>g.status==="pending" && g.signin_method!=="pre_added");
+  const inbox = document.getElementById("ppApprovalCard");
+  if(pending.length){
+    inbox.style.display = "block";
+    document.getElementById("ppPendingList").innerHTML = pending.map(g=>{
+      const contact = g.email || g.phone || "—";
+      return `<div class="row" style="padding:10px 0;border-top:1px solid var(--line);align-items:center;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:600">${esc(g.name||"(no name)")}</div>
+          <div class="muted" style="font-size:13px">${esc(contact)} · via ${esc(g.signin_method)} · ${esc(new Date(g.created_at).toLocaleString())}</div>
+        </div>
+        <button class="btn sm" onclick="ppApprove('${g.id}','approved')">Approve</button>
+        <button class="btn ghost sm" onclick="ppApprove('${g.id}','rejected')">Reject</button>
+      </div>`;
+    }).join("");
+  } else {
+    inbox.style.display = "none";
+  }
+  // Guest table
+  const tbody = document.getElementById("ppGuestRows");
+  const empty = document.getElementById("ppGuestEmpty");
+  if(!PP.guests.length){ tbody.innerHTML=""; empty.style.display="block"; }
+  else {
+    empty.style.display="none";
+    tbody.innerHTML = PP.guests.map(g=>{
+      const contact = [g.email, g.phone].filter(Boolean).join(" / ") || "—";
+      const rsvpSummary = (g.rsvps && g.rsvps.length) ? g.rsvps.map(r=>{
+        const ev = S.events.find(e=>e.id===r.event_id);
+        const nm = ev ? ev.name : r.event_id.slice(0,6);
+        return `<span class="pill" style="background:${r.attending?'#dcfce7':'#fee2e2'};color:${r.attending?'#166534':'#991b1b'};font-size:11px">${esc(nm)}${r.plus_ones?` +${r.plus_ones}`:""}</span>`;
+      }).join(" ") : `<span class="muted" style="font-size:12px">—</span>`;
+      const status = g.status==="approved"
+        ? `<span class="pill" style="background:#dcfce7;color:#166534">Approved</span>`
+        : g.status==="pending"
+          ? `<span class="pill" style="background:#fef3c7;color:#92400e">Pending</span>`
+          : `<span class="pill" style="background:#fee2e2;color:#991b1b">Rejected</span>`;
+      const seen = g.last_seen_at ? new Date(g.last_seen_at).toLocaleDateString() : "—";
+      return `<tr>
+        <td><div style="font-weight:600">${esc(g.name||"(no name)")}</div></td>
+        <td><div style="font-size:13px">${esc(contact)}</div></td>
+        <td><div style="font-size:13px">${esc(g.signin_method)}${g.push_enabled?' 🔔':''}</div></td>
+        <td>${status}</td>
+        <td>${rsvpSummary}</td>
+        <td><div style="font-size:13px">${seen}</div></td>
+        <td style="text-align:right;white-space:nowrap">
+          ${g.status==="pending"?`<button class="btn sm" onclick="ppApprove('${g.id}','approved')">Approve</button>`:""}
+          <button class="icon-btn" onclick="ppDeleteGuest('${g.id}')" title="Remove">&#10005;</button>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+  // Alert history
+  const ah = document.getElementById("ppAlertHistory");
+  if(!PP.alerts.length){
+    ah.innerHTML = `<div class="muted" style="font-size:13px">No alerts sent yet. Click "Send alert" above to send one.</div>`;
+  } else {
+    ah.innerHTML = PP.alerts.map(a=>{
+      let aud = "All guests";
+      const t = a.audience?.type;
+      if(t==="event"){ const ev=S.events.find(e=>e.id===a.audience.event_id); aud = "RSVPs to "+(ev?ev.name:"an event"); }
+      else if(t==="guests"){ aud = (a.audience.guest_ids?.length||0)+" specific guests"; }
+      return `<div style="padding:10px 0;border-top:1px solid var(--line)">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <div style="font-weight:600">${esc(a.title)}</div>
+          <div class="muted" style="font-size:12px">${esc(new Date(a.created_at).toLocaleString())}</div>
+        </div>
+        ${a.body?`<div style="font-size:14px;white-space:pre-wrap;margin-top:4px">${esc(a.body)}</div>`:""}
+        <div class="muted" style="font-size:12px;margin-top:4px">→ ${esc(aud)} · ${a.read_count||0} read${a.kind!=="manual"?` · auto (${esc(a.kind)})`:""}</div>
+      </div>`;
+    }).join("");
+  }
+}
+
+function ppCopyLink(){
+  const inp = document.getElementById("ppLinkInput");
+  if(!inp || !inp.value){ alert("Link not loaded yet. Try again in a second."); return; }
+  inp.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  navigator.clipboard?.writeText(inp.value).catch(()=>{});
+  const b = document.getElementById("ppCopyBtn"); const orig = b.textContent;
+  b.textContent = "✓ Copied"; setTimeout(()=>b.textContent=orig,1500);
+}
+
+async function ppApprove(id, decision){
+  if(decision==="rejected" && !confirm("Reject this guest? They'll keep seeing the waiting screen and won't get portal access.")) return;
+  try{
+    await rpc("wp_admin_approve_guest", {p_couple_token: cloudToken, p_guest_id:id, p_decision:decision});
+    if(decision==="approved"){
+      // Send auto welcome alert to just this guest
+      try{
+        await rpc("wp_admin_send_alert", {
+          p_couple_token: cloudToken,
+          p_title: "Welcome to the wedding portal! 💕",
+          p_body: "You're in. Tap around to see the schedule, venues, and what to expect.",
+          p_audience: {type:"guests", guest_ids:[id]},
+          p_kind: "welcome"
+        });
+      }catch(e){}
+    }
+    await ppEnsureLoaded(true);
+  }catch(e){ alert("Couldn't update guest. Check your connection."); }
+}
+
+async function ppDeleteGuest(id){
+  if(!confirm("Remove this guest from the portal? They won't be able to sign in again unless re-added.")) return;
+  try{ await rpc("wp_admin_delete_guest", {p_couple_token: cloudToken, p_guest_id:id}); }
+  catch(e){ alert("Delete failed."); return; }
+  await ppEnsureLoaded(true);
+}
+
+let _ppKnowSaveT = null;
+function ppDebouncedSaveKnow(){
+  const v = document.getElementById("ppKnowGeneral").value;
+  S.know_before_general = v;  // sync to the main plan blob so wp_save persists it
+  save();
+  document.getElementById("ppKnowSavedFlag").textContent = "Saving…";
+  if(_ppKnowSaveT) clearTimeout(_ppKnowSaveT);
+  _ppKnowSaveT = setTimeout(()=>{
+    document.getElementById("ppKnowSavedFlag").textContent = "✓ Saved — guests will see this on their next sync.";
+  }, 900);
+}
+
+function ppOpenCsvModal(){
+  showModal(`<h3>Upload guest list (CSV)</h3>
+    <p class="muted" style="font-size:13px">Pre-approve guests so they sign in instantly. Columns (header row required):
+    <code>name, email, phone, plus_ones_default</code>. Email or phone+name is used to match them when they sign in.</p>
+    <div class="field"><label class="fl">Paste CSV here</label>
+      <textarea id="csv_text" rows="8" placeholder="name,email,phone,plus_ones_default
+Priya Sharma,priya@example.com,+91 98765 43210,1
+Aman Patel,,+91 91234 56789,0" style="width:100%;font-family:ui-monospace,monospace;font-size:13px;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="ppUploadCsv()">Upload</button></div>`);
+}
+
+async function ppUploadCsv(){
+  const text = document.getElementById("csv_text").value.trim();
+  if(!text){ alert("Paste at least one row."); return; }
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  if(lines.length < 2){ alert("Need a header row + at least one guest row."); return; }
+  const header = lines[0].split(",").map(s=>s.trim().toLowerCase());
+  const idx = {
+    name: header.indexOf("name"),
+    email: header.indexOf("email"),
+    phone: header.indexOf("phone"),
+    po: header.indexOf("plus_ones_default")
+  };
+  if(idx.name === -1){ alert("CSV must include a 'name' column."); return; }
+  const rows = lines.slice(1).map(l=>{
+    const parts = l.split(",").map(s=>s.trim());
+    return {
+      name: parts[idx.name] || "",
+      email: idx.email>=0 ? (parts[idx.email]||null) : null,
+      phone: idx.phone>=0 ? (parts[idx.phone]||null) : null,
+      plus_ones_default: idx.po>=0 ? (parseInt(parts[idx.po],10)||0) : 0
+    };
+  }).filter(r=>r.name);
+  try{
+    const r = await rpc("wp_admin_upload_guests", {p_couple_token: cloudToken, p_rows: rows});
+    alert(`Added ${r.added||0} guests. Skipped ${r.skipped||0} duplicates.`);
+    closeModal();
+    await ppEnsureLoaded(true);
+  }catch(e){ alert("Upload failed."); }
+}
+
+function ppOpenAlertModal(){
+  const eventOpts = S.events.map(e=>`<option value="${esc(e.id)}">${esc(e.name)} (attendees)</option>`).join("");
+  showModal(`<h3>Send an alert</h3>
+    <p class="muted" style="font-size:13px">Guests see this in their Alerts tab. Browser push notifications go out too if they've opted in.</p>
+    <div class="field"><label class="fl">Title</label><input type="text" id="a_title" placeholder="e.g. Rain plan for sangeet" maxlength="80"></div>
+    <div class="field"><label class="fl">Message</label><textarea id="a_body" rows="3" placeholder="e.g. Sangeet moved indoors to the ballroom. Same time. See you there!" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
+    <div class="field"><label class="fl">Send to</label>
+      <select id="a_audience" style="width:100%">
+        <option value="all">All approved guests</option>
+        ${eventOpts}
+      </select></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="ppSendAlert()">📣 Send</button></div>`);
+  setTimeout(()=>document.getElementById("a_title").focus(),50);
+}
+
+async function ppSendAlert(){
+  const title = val("a_title").trim();
+  if(!title){ alert("Add a title."); return; }
+  const body  = val("a_body");
+  const aud   = val("a_audience");
+  const audience = aud==="all" ? {type:"all"} : {type:"event", event_id:aud};
+  try{
+    await rpc("wp_admin_send_alert", {p_couple_token: cloudToken,
+      p_title:title, p_body:body, p_audience:audience, p_kind:"manual"});
+    closeModal();
+    await ppEnsureLoaded(true);
+  }catch(e){ alert("Failed to send alert."); }
+}
+
 
 /* ---------------- Modal helpers ---------------- */
 const overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
@@ -886,18 +1272,36 @@ function addBudget(){
 }
 
 /* Add event */
-function openEventModal(){
-  showModal(`<h3>Add event</h3>
-    <div class="field"><label class="fl">Event name</label><input type="text" id="e_name" placeholder="e.g. Reception"></div>
-    <div class="field"><label class="fl">Date</label><input type="date" id="e_date"></div>
-    <div class="field"><label class="fl">Time (optional)</label><input type="text" id="e_time" placeholder="e.g. 6:00 PM"></div>
-    <div class="field"><label class="fl">Venue (optional)</label><input type="text" id="e_venue"></div>
+function openEventModal(editId){
+  const ev = editId ? S.events.find(e=>e.id===editId) : null;
+  const isEdit = !!ev;
+  showModal(`<h3>${isEdit?"Edit event":"Add event"}</h3>
+    <div class="field"><label class="fl">Event name</label><input type="text" id="e_name" placeholder="e.g. Reception" value="${esc(ev?.name||"")}"></div>
+    <div class="field"><label class="fl">Date</label><input type="date" id="e_date" value="${esc(ev?.date||"")}"></div>
+    <div class="field"><label class="fl">Time (optional)</label><input type="text" id="e_time" placeholder="e.g. 6:00 PM" value="${esc(ev?.time||"")}"></div>
+    <div class="field"><label class="fl">Venue (optional)</label><input type="text" id="e_venue" value="${esc(ev?.venue||"")}"></div>
+    <div class="muted" style="font-size:12px;font-weight:600;margin:14px 0 4px;letter-spacing:.06em;text-transform:uppercase">Guest portal info</div>
+    <div class="field"><label class="fl">Dress code (shown to guests)</label><input type="text" id="e_dress" placeholder="e.g. Traditional Indian formal" value="${esc(ev?.dress_code||"")}"></div>
+    <div class="field"><label class="fl">Map link (Google/Apple Maps URL)</label><input type="url" id="e_map" placeholder="https://maps.google.com/..." value="${esc(ev?.map_link||"")}"></div>
+    <div class="field"><label class="fl">Parking notes</label><input type="text" id="e_park" placeholder="e.g. Free valet at the main entrance" value="${esc(ev?.parking_notes||"")}"></div>
+    <div class="field"><label class="fl">Know before you go (per-event notes)</label><textarea id="e_know" rows="3" placeholder="e.g. Ceremony starts on time. Cover shoulders & knees." style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px">${esc(ev?.know_before_notes||"")}</textarea></div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn" onclick="addEvent()">Add</button></div>`);
+      <button class="btn" onclick="${isEdit?`saveEventEdit('${ev.id}')`:'addEvent()'}">${isEdit?"Save":"Add"}</button></div>`);
 }
 function addEvent(){
   const name=val("e_name"); if(!name){alert("Enter an event name");return;}
-  S.events.push({id:uid(),name,date:val("e_date"),time:val("e_time"),venue:val("e_venue"),tasks:[]});
+  S.events.push({id:uid(),name,date:val("e_date"),time:val("e_time"),venue:val("e_venue"),
+                 dress_code:val("e_dress"), map_link:val("e_map"),
+                 parking_notes:val("e_park"), know_before_notes:val("e_know"),
+                 tasks:[]});
+  save(); closeModal(); renderAll();
+}
+function saveEventEdit(id){
+  const ev = S.events.find(e=>e.id===id); if(!ev) return;
+  const name=val("e_name"); if(!name){alert("Enter an event name");return;}
+  ev.name=name; ev.date=val("e_date"); ev.time=val("e_time"); ev.venue=val("e_venue");
+  ev.dress_code=val("e_dress"); ev.map_link=val("e_map");
+  ev.parking_notes=val("e_park"); ev.know_before_notes=val("e_know");
   save(); closeModal(); renderAll();
 }
 
@@ -1122,12 +1526,14 @@ function roleEmoji(role){ return role==="groom" ? "🤵" : "👰"; }
 async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args); if(error) throw error; return data; }
 
 function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests, vendors:S.vendors||[],
+  know_before_general: S.know_before_general||"",
   settings:{ partnerA:S.settings.partnerA, partnerB:S.settings.partnerB, date:S.settings.date,
     venue:S.settings.venue, budget:S.settings.budget, theme:S.settings.theme, currency:S.settings.currency } }; }
 function adoptCouple(d){ if(!d) return; applyingRemote=true;
   if(d.rsvp_token) cloudRsvp=d.rsvp_token;
   const data=d.data||{};
   S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[]; S.vendors=data.vendors||[];
+  S.know_before_general = data.know_before_general || "";
   if(data.settings) S.settings=Object.assign(S.settings, data.settings);
   if(d.bride_name) S.settings.partnerA=d.bride_name;
   if(d.groom_name) S.settings.partnerB=d.groom_name;
@@ -1154,6 +1560,7 @@ function hashRoute(){
   const h=location.hash||""; let m;
   if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
+  if(m=h.match(/[#&]g=([a-f0-9]+)/i)) return {kind:"guest", entry:m[1]};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
   return {kind:"signup"};
 }
@@ -1162,6 +1569,7 @@ async function cloudBoot(){
   const r=hashRoute();
   if(r.kind==="admin"){ showAdmin(r.key); return; }
   if(r.kind==="rsvp"){ await showRsvp(r.token); return; }
+  if(r.kind==="guest"){ await guestBoot(r.entry); return; }
   if(r.kind==="couple"){ cloudToken=r.token; await openCouple(); return; }
   showSignup();
 }
@@ -1310,6 +1718,438 @@ function showLinkModal(){
     <p class="muted" style="font-size:13px">👰 ${esc(S.settings.partnerA||"Bride")} 💕 🤵 ${esc(S.settings.partnerB||"Groom")}</p>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">Done</button></div>`);
 }
+
+/* =================================================================
+   ================  GUEST PORTAL (#g=<entry_token>)  ===============
+   ================================================================= */
+
+// Optional: paste a Google OAuth Client ID here to enable "Continue with Google".
+// Get one at https://console.cloud.google.com/apis/credentials → OAuth 2.0 Client → Web app.
+// Add your site origin (e.g. https://aravindramesh2806.github.io) as an Authorized JS origin.
+const GOOGLE_CLIENT_ID = "";
+
+let G = {
+  entry:null, guestId:null, guestToken:null, status:null,
+  data:null, coupleName:"", events:[], rsvpsByEvent:{}, alerts:[],
+  tab:"home", pollT:null
+};
+
+function gpKey(entry){ return "wp.guestToken."+entry; }
+function gpSaveToken(entry,t){ try{ localStorage.setItem(gpKey(entry),t);}catch(e){} }
+function gpReadToken(entry){ try{ return localStorage.getItem(gpKey(entry)); }catch(e){ return null; } }
+function gpClearToken(entry){ try{ localStorage.removeItem(gpKey(entry)); }catch(e){} }
+
+async function guestBoot(entry){
+  G.entry = entry;
+  hideCloudAuth();
+  document.getElementById("cloudauth").classList.remove("show");
+  // If we have a stored guest token, try to use it.
+  const t = gpReadToken(entry);
+  if(t){
+    G.guestToken = t;
+    const r = await guestLoad();
+    if(r && !r.error){ guestEnterPortal(r); guestStartPolling(); return; }
+    // token invalid → fall through to sign-in
+    gpClearToken(entry); G.guestToken=null;
+  }
+  showGuestSignin();
+}
+
+async function guestLoad(){
+  try{ return await rpc("wp_guest_load",{p_guest_token:G.guestToken}); }
+  catch(e){ return {error:"network"}; }
+}
+
+function showGuestSignin(err){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="440px";
+  const googleBtn = GOOGLE_CLIENT_ID
+    ? `<button class="gp-google-btn" onclick="gpGoogleSignin()">
+         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5 43.5 34.8 43.5 24c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4.5 24 4.5 16.3 4.5 9.7 8.8 6.3 14.7z"/><path fill="#4CAF50" d="M24 43.5c5.2 0 9.8-2 13.3-5.2l-6.2-5.2c-1.9 1.3-4.4 2.2-7.1 2.2-5.2 0-9.7-3.4-11.3-8l-6.5 5C9.5 39 16.2 43.5 24 43.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2c-.4.4 6.7-4.9 6.7-14.8 0-1.2-.1-2.3-.4-3.5z"/></svg>
+         Continue with Google
+       </button>
+       <div class="gp-divider">or</div>` : "";
+  c.innerHTML = `<div class="heart-badge">💍</div><div class="kicker">Wedding portal</div>
+    <h2>Sign in as a guest</h2>
+    <p class="lead">Welcome! Sign in to see the schedule, directions, and updates from the couple.</p>
+    ${googleBtn}
+    <div class="gp-signin-tabs">
+      <button id="gsTab_phone" class="on" onclick="gpSwitchSigninTab('phone')">Name + phone</button>
+      <button id="gsTab_email" onclick="gpSwitchSigninTab('email')">Email</button>
+    </div>
+    <div id="gpSigninForm"></div>
+    <div class="err" id="gsErr">${err?esc(err):""}</div>`;
+  gpSwitchSigninTab("phone");
+}
+
+function gpSwitchSigninTab(which){
+  ["phone","email"].forEach(k=>{
+    const b=document.getElementById("gsTab_"+k); if(b) b.classList.toggle("on", k===which);
+  });
+  const f=document.getElementById("gpSigninForm");
+  if(which==="phone"){
+    f.innerHTML = `
+      <div class="field"><label class="fl">Your full name</label><input type="text" id="gs_name" placeholder="e.g. Priya Sharma"></div>
+      <div class="field"><label class="fl">Phone</label><input type="tel" id="gs_phone" placeholder="e.g. +91 98765 43210"></div>
+      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('phone')">Continue</button></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">If the couple pre-added you with the same name & phone you'll get in instantly. Otherwise they'll approve you.</p>`;
+    setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
+  } else {
+    f.innerHTML = `
+      <div class="field"><label class="fl">Your name</label><input type="text" id="gs_name" placeholder="e.g. Priya Sharma"></div>
+      <div class="field"><label class="fl">Email</label><input type="email" id="gs_email" placeholder="you@example.com"></div>
+      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('email')">Continue</button></div>`;
+    setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
+  }
+}
+
+async function gpDoSignin(method){
+  const name = caVal("gs_name");
+  const email = method==="email" ? caVal("gs_email") : null;
+  const phone = method==="phone" ? caVal("gs_phone") : null;
+  if(!name){ document.getElementById("gsErr").textContent = "Please enter your name."; return; }
+  if(method==="phone" && (!phone || phone.replace(/\D/g,"").length<4)){
+    document.getElementById("gsErr").textContent = "Please enter a valid phone number."; return;
+  }
+  if(method==="email" && !email){
+    document.getElementById("gsErr").textContent = "Please enter your email."; return;
+  }
+  try{
+    const r = await rpc("wp_guest_signup", {
+      p_guest_entry_token:G.entry, p_method:method,
+      p_name:name, p_email:email, p_phone:phone, p_google_sub:null
+    });
+    if(r.error){ document.getElementById("gsErr").textContent = "Couldn't sign in: "+r.error; return; }
+    G.guestToken = r.guest_token; G.guestId = r.guest_id; G.status = r.status;
+    gpSaveToken(G.entry, r.guest_token);
+    const loaded = await guestLoad();
+    guestEnterPortal(loaded);
+    guestStartPolling();
+  }catch(e){ document.getElementById("gsErr").textContent = "Network error. Try again."; }
+}
+
+/* ---- Google Sign-In (popup via GIS) ---- */
+let _gisLoaded = false;
+function gpEnsureGis(){
+  return new Promise((resolve,reject)=>{
+    if(_gisLoaded) return resolve();
+    const s=document.createElement("script");
+    s.src="https://accounts.google.com/gsi/client"; s.async=true; s.defer=true;
+    s.onload=()=>{ _gisLoaded=true; resolve(); }; s.onerror=()=>reject(new Error("gis_load"));
+    document.head.appendChild(s);
+  });
+}
+function gpParseJwt(t){
+  try{ const p=t.split(".")[1]; const json = atob(p.replace(/-/g,"+").replace(/_/g,"/")); return JSON.parse(decodeURIComponent(escape(json))); }
+  catch(e){ return null; }
+}
+async function gpGoogleSignin(){
+  if(!GOOGLE_CLIENT_ID){ document.getElementById("gsErr").textContent = "Google sign-in isn't configured yet."; return; }
+  try{
+    await gpEnsureGis();
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async (resp)=>{
+        const claim = gpParseJwt(resp.credential); if(!claim){ alert("Sign-in failed."); return; }
+        try{
+          const r = await rpc("wp_guest_signup", {
+            p_guest_entry_token:G.entry, p_method:"google",
+            p_name:claim.name||claim.email, p_email:claim.email,
+            p_phone:null, p_google_sub:claim.sub
+          });
+          if(r.error){ alert("Sign-in failed: "+r.error); return; }
+          G.guestToken=r.guest_token; G.guestId=r.guest_id; G.status=r.status;
+          gpSaveToken(G.entry, r.guest_token);
+          const loaded = await guestLoad();
+          guestEnterPortal(loaded);
+          guestStartPolling();
+        }catch(e){ alert("Network error during sign-in."); }
+      }
+    });
+    google.accounts.id.prompt();
+  }catch(e){ document.getElementById("gsErr").textContent = "Couldn't load Google. Try email/phone instead."; }
+}
+
+/* ---- Portal rendering ---- */
+function guestEnterPortal(loaded){
+  if(loaded && loaded.error){ showGuestSignin(loaded.error); return; }
+  G.data = loaded;
+  G.status = loaded.guest?.status || G.status;
+  G.coupleName = `${loaded.couple?.bride_name||""} & ${loaded.couple?.groom_name||""}`.trim().replace(/^&\s*/,"").replace(/\s*&$/,"") || "Wedding";
+  G.events = (loaded.plan_data && Array.isArray(loaded.plan_data.events)) ? loaded.plan_data.events : [];
+  G.rsvpsByEvent = {};
+  (loaded.rsvps||[]).forEach(r=> G.rsvpsByEvent[r.event_id] = r);
+  G.alerts = loaded.alerts || [];
+  hideCloudAuth();
+  document.getElementById("guestPortal").style.display = "block";
+  document.body.style.background = "var(--bg)";
+  document.getElementById("gpCoupleName").textContent = G.coupleName;
+  if(G.status !== "approved"){ gpRenderPending(); return; }
+  gpRenderTabs();
+  gpShowTab(G.tab || "home");
+}
+
+function gpRenderPending(){
+  document.getElementById("gpTabs").innerHTML = "";
+  document.getElementById("gpMain").innerHTML = `
+    <div class="gp-pending">
+      <div class="emoji">⏳</div>
+      <h2 style="margin:8px 0">Waiting for the couple's approval</h2>
+      <p class="muted">${esc(G.coupleName)} will see your request shortly. This page will update automatically once you're in.</p>
+      <p class="muted" style="margin-top:24px;font-size:13px">You can close this tab and come back any time using the same invite link.</p>
+    </div>`;
+}
+
+function gpRenderTabs(){
+  const unread = (G.alerts||[]).filter(a=>!a.read).length;
+  const tabs = [
+    {k:"home", label:"Home"},
+    {k:"schedule", label:"Schedule"},
+    {k:"venues", label:"Venues"},
+    {k:"know", label:"Know"},
+    {k:"rsvp", label:"My RSVP"},
+    {k:"alerts", label:"Alerts"+(unread?` (${unread})`:"")}
+  ];
+  document.getElementById("gpTabs").innerHTML = tabs.map(t=>
+    `<button class="gp-tab${t.k===G.tab?' active':''}" onclick="gpShowTab('${t.k}')">${esc(t.label)}</button>`
+  ).join("");
+  const badge = document.getElementById("gpUnread");
+  if(unread>0){ badge.textContent = unread; badge.style.display = "flex"; }
+  else { badge.style.display = "none"; }
+}
+
+function gpShowTab(name){
+  G.tab = name; gpRenderTabs();
+  const m = document.getElementById("gpMain");
+  if(name==="home")     m.innerHTML = gpRenderHome();
+  else if(name==="schedule") m.innerHTML = gpRenderSchedule();
+  else if(name==="venues")   m.innerHTML = gpRenderVenues();
+  else if(name==="know")     m.innerHTML = gpRenderKnow();
+  else if(name==="rsvp")     m.innerHTML = gpRenderRsvp();
+  else if(name==="alerts")   { m.innerHTML = gpRenderAlerts(); gpMarkAlertsRead(); }
+}
+
+function gpDaysUntil(dateStr){
+  if(!dateStr) return null;
+  const d = new Date(dateStr+"T00:00:00"); if(isNaN(d)) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((d-today)/86400000);
+}
+function gpFmtDate(dateStr){
+  if(!dateStr) return "";
+  const d = new Date(dateStr); if(isNaN(d)) return dateStr;
+  return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+}
+function gpFmtTime(t){
+  if(!t) return "";
+  const m = String(t).match(/(\d{1,2}):(\d{2})/); if(!m) return t;
+  let h=+m[1]; const mm=m[2]; const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${mm} ${ap}`;
+}
+function gpEventDateTime(ev){
+  const dStr = ev.date || G.data?.couple?.wedding_date || "";
+  const tStr = ev.time || "";
+  const date = dStr ? gpFmtDate(dStr) : "";
+  const time = tStr ? gpFmtTime(tStr) : "";
+  return [date,time].filter(Boolean).join(" · ");
+}
+function gpUpcomingEvents(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  return G.events
+    .map(ev => ({ev, d: ev.date ? new Date(ev.date+"T00:00:00") : null}))
+    .filter(x => !x.d || x.d >= today)
+    .sort((a,b)=>(a.d?+a.d:0)-(b.d?+b.d:0));
+}
+
+function gpRenderHome(){
+  const date = G.data?.couple?.wedding_date;
+  const days = gpDaysUntil(date);
+  const upcoming = gpUpcomingEvents();
+  const next = upcoming[0];
+  const recentAlerts = (G.alerts||[]).slice(0,3);
+  return `
+    <div class="gp-countdown">
+      <div class="lab">${esc(G.coupleName)}</div>
+      <div class="days">${days==null?"💕":(days>=0?days:0)}</div>
+      <div class="lab">${days==null?"See you soon":(days>0?"days to go":(days===0?"today!":"the big day was "+(-days)+" days ago"))}</div>
+    </div>
+    ${next ? `<div class="gp-card"><div class="kicker">Up next</div><h3>${esc(next.ev.name||"Event")}</h3>
+      <div class="muted" style="font-size:14px">${esc(gpEventDateTime(next.ev))}</div>
+      ${next.ev.venue?`<div style="margin-top:6px">📍 ${esc(next.ev.venue)}</div>`:""}
+      <div class="gp-event-actions"><button class="btn ghost" onclick="gpShowTab('schedule')">Full schedule →</button></div>
+    </div>` : ""}
+    ${recentAlerts.length?`<div class="gp-card"><h3>Latest updates</h3>
+      ${recentAlerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}"><h4>${esc(a.title)}</h4>
+        ${a.body?`<div style="font-size:14px">${esc(a.body)}</div>`:""}
+        <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div></div>`).join("")}
+      ${G.alerts.length>3?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="gpShowTab('alerts')">See all alerts</button>`:""}
+    </div>`:""}
+    ${gpRenderKnowGeneralCard()}
+  `;
+}
+
+function gpRenderKnowGeneralCard(){
+  const general = G.data?.plan_data?.know_before_general || "";
+  if(!general.trim()) return "";
+  return `<div class="gp-card"><h3>Things to know</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`;
+}
+
+function gpRenderSchedule(){
+  const list = gpUpcomingEvents();
+  if(!list.length) return `<div class="gp-empty"><div class="big">📅</div>No events scheduled yet.</div>`;
+  return list.map(({ev})=>{
+    return `<div class="gp-event">
+      <div class="gp-event-head">
+        <div class="gp-event-title">${esc(ev.name||"Event")}</div>
+        <div class="gp-event-when">${esc(gpEventDateTime(ev))}</div>
+      </div>
+      <div class="gp-event-body">
+        ${ev.venue?`<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`:""}
+        ${ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span>${esc(ev.dress_code)}</span></div>`:""}
+        ${ev.know_before_notes?`<div class="gp-row" style="display:block"><div class="k">Know before you go</div><div style="white-space:pre-wrap;font-size:14px;margin-top:4px">${esc(ev.know_before_notes)}</div></div>`:""}
+        <div class="gp-event-actions">
+          ${ev.map_link?`<a class="btn ghost" href="${esc(ev.map_link)}" target="_blank" rel="noopener">🗺 Directions</a>`:(ev.venue?`<a class="btn ghost" href="https://maps.google.com/?q=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">🗺 Directions</a>`:"")}
+          <button class="btn ghost" onclick="gpDownloadIcs('${esc(ev.id||"")}')">📅 Add to calendar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function gpRenderVenues(){
+  const venues = {};
+  G.events.forEach(ev=>{
+    const key = (ev.venue||"").trim(); if(!key) return;
+    if(!venues[key]) venues[key] = {name:key, map_link:ev.map_link||"", parking:ev.parking_notes||"", events:[]};
+    venues[key].events.push(ev.name||"Event");
+    if(!venues[key].map_link && ev.map_link) venues[key].map_link = ev.map_link;
+    if(!venues[key].parking && ev.parking_notes) venues[key].parking = ev.parking_notes;
+  });
+  const list = Object.values(venues);
+  if(!list.length) return `<div class="gp-empty"><div class="big">📍</div>No venues yet.</div>`;
+  return list.map(v=>`<div class="gp-card"><h3>${esc(v.name)}</h3>
+    <div class="muted" style="font-size:13px;margin-bottom:8px">${v.events.map(esc).join(" · ")}</div>
+    ${v.parking?`<div style="font-size:14px;white-space:pre-wrap"><b>Parking:</b> ${esc(v.parking)}</div>`:""}
+    <div class="gp-event-actions" style="margin-top:10px">
+      <a class="btn ghost" href="${esc(v.map_link||("https://maps.google.com/?q="+encodeURIComponent(v.name)))}" target="_blank" rel="noopener">🗺 Open in Maps</a>
+      <a class="btn ghost" href="${esc("https://maps.apple.com/?q="+encodeURIComponent(v.name))}" target="_blank" rel="noopener">🍎 Apple Maps</a>
+    </div>
+  </div>`).join("");
+}
+
+function gpRenderKnow(){
+  const general = G.data?.plan_data?.know_before_general || "";
+  const perEvent = G.events.filter(e => e.know_before_notes);
+  if(!general && !perEvent.length) return `<div class="gp-empty"><div class="big">ℹ️</div>The couple hasn't added notes yet.</div>`;
+  return `${general?`<div class="gp-card"><h3>General</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`:""}
+    ${perEvent.map(ev=>`<div class="gp-card"><h3>${esc(ev.name||"Event")}</h3>
+      <div style="white-space:pre-wrap;font-size:14px">${esc(ev.know_before_notes)}</div></div>`).join("")}`;
+}
+
+function gpRenderRsvp(){
+  if(!G.events.length) return `<div class="gp-empty"><div class="big">✉️</div>No events to RSVP for yet.</div>`;
+  return G.events.map(ev=>{
+    const r = G.rsvpsByEvent[ev.id] || {};
+    const yes = r.attending === true, no = r.attending === false;
+    return `<div class="gp-card">
+      <h3>${esc(ev.name||"Event")}</h3>
+      <div class="muted" style="font-size:13px">${esc(gpEventDateTime(ev))}</div>
+      <div class="gp-rsvp" style="margin-top:10px">
+        <button class="yes${yes?' on':''}" onclick="gpRsvp('${esc(ev.id||"")}', true)">✓ Attending</button>
+        <button class="no${no?' on':''}" onclick="gpRsvp('${esc(ev.id||"")}', false)">✗ Can't make it</button>
+      </div>
+      ${yes?`<div style="margin-top:10px"><label class="muted" style="font-size:13px">Plus-ones (incl. partner & kids)</label>
+        <input type="number" min="0" max="10" value="${+(r.plus_ones||0)}" id="gpPO_${esc(ev.id||"")}" onchange="gpRsvpPO('${esc(ev.id||"")}', this.value)" style="width:80px;margin-left:8px;padding:6px;border:1px solid var(--line);border-radius:8px"></div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function gpRenderAlerts(){
+  if(!G.alerts.length) return `<div class="gp-empty"><div class="big">🔔</div>No alerts yet. The couple will post updates here.</div>`;
+  return G.alerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}">
+    <h4>${esc(a.title)}</h4>
+    ${a.body?`<div style="font-size:14px;white-space:pre-wrap">${esc(a.body)}</div>`:""}
+    <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div>
+  </div>`).join("");
+}
+
+async function gpRsvp(eventId, attending){
+  const prev = G.rsvpsByEvent[eventId] || {};
+  const plus_ones = attending ? (prev.plus_ones || 0) : 0;
+  G.rsvpsByEvent[eventId] = {event_id:eventId, attending, plus_ones};
+  gpShowTab("rsvp");
+  try{
+    await rpc("wp_guest_rsvp", {p_guest_token:G.guestToken, p_event_id:eventId, p_attending:attending, p_plus_ones:plus_ones});
+  }catch(e){ alert("Couldn't save RSVP. Will retry next time you open the app."); }
+}
+async function gpRsvpPO(eventId, val){
+  const v = Math.max(0, Math.min(10, parseInt(val,10)||0));
+  const prev = G.rsvpsByEvent[eventId] || {event_id:eventId, attending:true};
+  prev.plus_ones = v; G.rsvpsByEvent[eventId] = prev;
+  try{
+    await rpc("wp_guest_rsvp", {p_guest_token:G.guestToken, p_event_id:eventId, p_attending:!!prev.attending, p_plus_ones:v});
+  }catch(e){}
+}
+
+async function gpMarkAlertsRead(){
+  const unread = (G.alerts||[]).filter(a=>!a.read);
+  if(!unread.length) return;
+  for(const a of unread){
+    try{ await rpc("wp_guest_mark_alert_read",{p_guest_token:G.guestToken, p_alert_id:a.id}); a.read = true; }
+    catch(e){}
+  }
+  gpRenderTabs();
+}
+
+function gpDownloadIcs(eventId){
+  const ev = G.events.find(e=>e.id===eventId); if(!ev) return;
+  const dStr = ev.date || G.data?.couple?.wedding_date; if(!dStr){ alert("This event needs a date first."); return; }
+  const tStr = ev.time || "10:00";
+  const dt = new Date(dStr+"T"+tStr+":00");
+  const end = new Date(dt.getTime()+2*60*60*1000);
+  const z = n => String(n).padStart(2,"0");
+  const f = d => `${d.getUTCFullYear()}${z(d.getUTCMonth()+1)}${z(d.getUTCDate())}T${z(d.getUTCHours())}${z(d.getUTCMinutes())}00Z`;
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//WeddingPlanner//EN","BEGIN:VEVENT",
+    "UID:"+(ev.id||Math.random())+"@weddingplanner","DTSTAMP:"+f(new Date()),
+    "DTSTART:"+f(dt),"DTEND:"+f(end),
+    "SUMMARY:"+(ev.name||"Wedding event"),
+    ev.venue?("LOCATION:"+ev.venue):"",
+    "END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
+  const blob = new Blob([ics],{type:"text/calendar"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = (ev.name||"event").replace(/[^a-z0-9]/gi,"-").toLowerCase()+".ics";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function gpSignOut(){
+  if(G.entry) gpClearToken(G.entry);
+  G.guestToken=null; G.guestId=null; G.status=null;
+  guestStopPolling();
+  document.getElementById("guestPortal").style.display="none";
+  showGuestSignin();
+}
+
+function guestStartPolling(){
+  guestStopPolling();
+  G.pollT = setInterval(async ()=>{
+    const r = await guestLoad(); if(!r || r.error) return;
+    const prevStatus = G.status;
+    const prevUnread = (G.alerts||[]).filter(a=>!a.read).length;
+    G.data = r;
+    G.status = r.guest?.status;
+    G.events = (r.plan_data && Array.isArray(r.plan_data.events)) ? r.plan_data.events : [];
+    G.rsvpsByEvent = {}; (r.rsvps||[]).forEach(x=> G.rsvpsByEvent[x.event_id]=x);
+    G.alerts = r.alerts || [];
+    if(prevStatus !== "approved" && G.status === "approved"){
+      // Just approved — render full portal.
+      gpRenderTabs(); gpShowTab("home"); return;
+    }
+    if(G.status !== "approved"){ gpRenderPending(); return; }
+    const newUnread = G.alerts.filter(a=>!a.read).length;
+    if(newUnread !== prevUnread){ gpRenderTabs(); }
+    if(G.tab) gpShowTab(G.tab);
+  }, 15000);
+}
+function guestStopPolling(){ if(G.pollT) clearInterval(G.pollT); G.pollT=null; }
 
 /* ---------------- Init ---------------- */
 buildTabs();
