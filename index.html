@@ -864,7 +864,11 @@ function renderGuests(){
       <td><select class="rsvp-sel" onchange="setRsvp('${g.id}',this.value)" style="width:auto;padding:5px 8px">
         ${["pending","yes","no","maybe"].map(o=>`<option value="${o}" ${g.rsvp===o?"selected":""}>${tag[o][1]}</option>`).join("")}
       </select><span class="print-only">${tg[1]}</span></td>
-      <td style="text-align:right;white-space:nowrap"><button class="icon-btn" onclick="openGuestModal('${g.id}')" title="Edit guest">&#9998;</button><button class="icon-btn" onclick="delGuest('${g.id}')" title="Delete guest">&#10005;</button></td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="icon-btn" onclick="openGuestInviteModal('${g.id}')" title="Personal invite link">&#128231;</button>
+        <button class="icon-btn" onclick="openGuestModal('${g.id}')" title="Edit guest">&#9998;</button>
+        <button class="icon-btn" onclick="delGuest('${g.id}')" title="Delete guest">&#10005;</button>
+      </td>
     </tr>
     <tr class="guest-detail" style="display:none"><td colspan="8" style="background:var(--accent-soft);padding:10px 16px">
       <span class="stat-lab" style="margin-right:10px">Invited to</span>${evChecks}
@@ -1410,19 +1414,59 @@ function openGuestModal(editId){
       <button class="btn" onclick="${isEdit?`saveGuestEdit('${g.id}')`:'addGuest()'}">${isEdit?"Save":"Add"}</button></div>`);
 }
 async function syncGuestToPortal(guest){
-  // Cloud only — push this guest into the portal pre-added list so they
-  // can auto-sign-in by first name + phone.
+  // Cloud only — every planning guest gets a portal pre-added entry so the
+  // couple can hand them a personalised one-click invite link.
   if(!CLOUD || !cloudToken) return;
-  if(!guest.phone && !guest.email) return; // need at least one to match
   try{
-    await rpc("wp_admin_sync_preguest", {
+    const r = await rpc("wp_admin_sync_preguest", {
       p_couple_token: cloudToken,
       p_name: guest.name,
       p_phone: guest.phone || null,
       p_email: guest.email || null,
       p_plus_ones: Math.max(0, (Number(guest.party)||1) - 1)
     });
+    if(r && r.guest_token){
+      guest.portal_token = r.guest_token;
+      guest.portal_guest_id = r.guest_id;
+      save();
+      renderAll();
+    }
   }catch(e){ console.warn("preguest sync failed", e); }
+}
+
+function guestInviteUrl(g){
+  if(!g.portal_token) return "";
+  const o=location.origin; const base=(o&&o!=="null")? o+location.pathname : "";
+  return base + "#i=" + g.portal_token;
+}
+
+function copyGuestInvite(id){
+  const g = S.guests.find(x=>x.id===id); if(!g) return;
+  if(!g.portal_token){ alert("Invite link still syncing — try again in a moment."); syncGuestToPortal(g); return; }
+  const url = guestInviteUrl(g);
+  navigator.clipboard?.writeText(url).then(()=>{
+    const btn = document.querySelector(`[data-invite-btn="${id}"]`);
+    if(btn){ const orig = btn.textContent; btn.textContent = "✓ Copied"; setTimeout(()=>btn.textContent=orig,1500); }
+  }).catch(()=>alert("Couldn't copy. URL:\n"+url));
+}
+
+function openGuestInviteModal(id){
+  const g = S.guests.find(x=>x.id===id); if(!g) return;
+  if(!g.portal_token){ syncGuestToPortal(g); }
+  const url = guestInviteUrl(g) || "Generating link…";
+  const phoneClean = (g.phone||"").replace(/\D/g,"");
+  const msg = `Hi ${g.name.split(/\s+/)[0]||""}! Here's your personal invite to our wedding portal — schedule, venues, RSVP all in one place: ${url}`;
+  showModal(`<h3>Invite link for ${esc(g.name)}</h3>
+    <p class="muted" style="font-size:13px">One-tap link &mdash; they're signed in automatically as themselves, no form to fill.</p>
+    <div class="field"><label class="fl">Personal invite URL</label>
+      <input type="text" readonly value="${esc(url)}" onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:13px"></div>
+    <div class="row" style="gap:8px;margin-top:12px">
+      <button class="btn" onclick="navigator.clipboard?.writeText('${esc(url)}');this.textContent='✓ Copied';setTimeout(()=>this.textContent='📋 Copy link',1200)">📋 Copy link</button>
+      ${phoneClean?`<a class="btn ghost" href="https://wa.me/${esc(phoneClean)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">💬 WhatsApp</a>
+      <a class="btn ghost" href="sms:${esc(phoneClean)}?body=${encodeURIComponent(msg)}">📱 SMS</a>`:""}
+      ${g.email?`<a class="btn ghost" href="mailto:${esc(g.email)}?subject=${encodeURIComponent('You\'re invited to our wedding')}&body=${encodeURIComponent(msg)}">✉️ Email</a>`:""}
+    </div>
+    <div class="modal-actions" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Done</button></div>`);
 }
 function addGuest(){
   const name=val("g_name"); if(!name){alert("Enter a guest name");return;}
@@ -1685,6 +1729,7 @@ function hashRoute(){
   const h=location.hash||""; let m;
   if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
+  if(m=h.match(/[#&]i=([a-f0-9]+)/i)) return {kind:"guest_invite", token:m[1]};
   if(m=h.match(/[#&]guestlogin-([a-z0-9-]+)/i)) return {kind:"guest_by_slug", slug:m[1]};
   if(/[#&]guestlogin\b/i.test(h) && VANITY_GUEST_ENTRY) return {kind:"guest", entry:VANITY_GUEST_ENTRY, vanity:true};
   if(m=h.match(/[#&]g=([a-f0-9]+)/i)) return {kind:"guest", entry:m[1]};
@@ -1698,6 +1743,7 @@ async function cloudBoot(){
   if(r.kind==="admin"){ showAdmin(r.key); return; }
   if(r.kind==="rsvp"){ await showRsvp(r.token); return; }
   if(r.kind==="guest"){ await guestBoot(r.entry); return; }
+  if(r.kind==="guest_invite"){ await guestBootViaInvite(r.token); return; }
   if(r.kind==="guest_by_slug"){ await guestBootBySlug(r.slug); return; }
   if(r.kind==="guest_no_token"){ showGuestNoToken(); return; }
   if(r.kind==="couple"){ cloudToken=r.token; await openCouple(); return; }
@@ -1868,6 +1914,26 @@ function gpKey(entry){ return "wp.guestToken."+entry; }
 function gpSaveToken(entry,t){ try{ localStorage.setItem(gpKey(entry),t);}catch(e){} }
 function gpReadToken(entry){ try{ return localStorage.getItem(gpKey(entry)); }catch(e){ return null; } }
 function gpClearToken(entry){ try{ localStorage.removeItem(gpKey(entry)); }catch(e){} }
+
+async function guestBootViaInvite(token){
+  // Personal invite link — token IS the credential, no form needed.
+  hideCloudAuth();
+  document.body.classList.add("guest-mode");
+  try{
+    const r = await rpc("wp_guest_redeem_invite", {p_guest_token: token});
+    if(r && !r.error && r.guest_token){
+      G.entry = "via_invite";  // marker so gpSignOut clears correctly
+      G.guestToken = r.guest_token; G.guestId = r.guest_id; G.status = r.status;
+      gpSaveToken("via_invite", r.guest_token);
+      const loaded = await guestLoad();
+      guestEnterPortal(loaded);
+      guestStartPolling();
+      return;
+    }
+  }catch(e){}
+  // Token invalid — fall back to the generic sign-in screen.
+  showGuestSignin("Invite link expired. Sign in below.");
+}
 
 async function guestBootBySlug(slug){
   try{
