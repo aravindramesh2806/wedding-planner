@@ -201,6 +201,8 @@
   }
   /* ------- Guest Portal ------- */
   #guestPortal{min-height:100vh;background:var(--bg);position:fixed;inset:0;overflow:auto;z-index:90}
+  .preview-banner{position:sticky;top:0;z-index:60;background:#fef3c7;color:#854d0e;text-align:center;padding:8px 14px;font-size:13px;font-weight:600;border-bottom:1px solid #fde68a;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+  .preview-banner .btn{padding:4px 10px;background:#854d0e;color:#fff;border-radius:6px;font-size:12px;cursor:pointer;border:0;font-weight:600}
   body.guest-mode > header.top,
   body.guest-mode > nav.tabs,
   body.guest-mode > div.wrap,
@@ -1134,9 +1136,9 @@ function dCopyGuestLink(){
 }
 
 function dOpenGuestLink(){
-  const inp = document.getElementById("dGuestLinkInput");
-  if(!inp || !inp.value){ alert("Link not loaded yet. Try again in a second."); return; }
-  window.open(inp.value, "_blank");
+  if(!cloudToken){ alert("Open your planner first."); return; }
+  const o = location.origin, base = (o && o!=="null") ? o + location.pathname : "";
+  window.open(base + "#preview=" + cloudToken, "_blank");
 }
 
 async function ppApprove(id, decision){
@@ -1729,6 +1731,7 @@ function hashRoute(){
   const h=location.hash||""; let m;
   if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
+  if(m=h.match(/[#&]preview=([a-f0-9]+)/i)) return {kind:"preview", token:m[1]};
   if(m=h.match(/[#&]i=([a-f0-9]+)/i)) return {kind:"guest_invite", token:m[1]};
   if(m=h.match(/[#&]guestlogin-([a-z0-9-]+)/i)) return {kind:"guest_by_slug", slug:m[1]};
   if(/[#&]guestlogin\b/i.test(h) && VANITY_GUEST_ENTRY) return {kind:"guest", entry:VANITY_GUEST_ENTRY, vanity:true};
@@ -1743,6 +1746,7 @@ async function cloudBoot(){
   if(r.kind==="admin"){ showAdmin(r.key); return; }
   if(r.kind==="rsvp"){ await showRsvp(r.token); return; }
   if(r.kind==="guest"){ await guestBoot(r.entry); return; }
+  if(r.kind==="preview"){ await previewBoot(r.token); return; }
   if(r.kind==="guest_invite"){ await guestBootViaInvite(r.token); return; }
   if(r.kind==="guest_by_slug"){ await guestBootBySlug(r.slug); return; }
   if(r.kind==="guest_no_token"){ showGuestNoToken(); return; }
@@ -1914,6 +1918,27 @@ function gpKey(entry){ return "wp.guestToken."+entry; }
 function gpSaveToken(entry,t){ try{ localStorage.setItem(gpKey(entry),t);}catch(e){} }
 function gpReadToken(entry){ try{ return localStorage.getItem(gpKey(entry)); }catch(e){ return null; } }
 function gpClearToken(entry){ try{ localStorage.removeItem(gpKey(entry)); }catch(e){} }
+
+async function previewBoot(coupleToken){
+  // Couple-side preview of the guest portal — uses their couple token,
+  // no auth flow. Loads couple\'s data into the guest portal UI shape.
+  hideCloudAuth();
+  document.body.classList.add("guest-mode","preview-mode");
+  try{
+    const r = await rpc("wp_admin_preview_portal", {p_couple_token: coupleToken});
+    if(r && !r.error){
+      G.entry = "preview"; G.guestToken = null; G.guestId = null;
+      G.status = "approved";
+      G.previewMode = true;
+      G.coupleName = `${r.couple?.bride_name||""} & ${r.couple?.groom_name||""}`.trim().replace(/^&\s*/,"").replace(/\s*&$/,"") || "Wedding";
+      guestEnterPortal(r);
+      // Don\'t poll in preview mode
+      return;
+    }
+  }catch(e){}
+  alert("Could not load preview. Open your planner first.");
+  location.hash = "#w=" + coupleToken;
+}
 
 async function guestBootViaInvite(token){
   // Personal invite link — token IS the credential, no form needed.
@@ -2135,6 +2160,17 @@ async function gpGoogleSignin(){
 /* ---- Portal rendering ---- */
 function guestEnterPortal(loaded){
   if(loaded && loaded.error){ showGuestSignin(loaded.error); return; }
+  // Preview banner — only when previewing as the couple
+  const existingBanner = document.getElementById("previewBanner");
+  if(G.previewMode){
+    if(!existingBanner){
+      const b = document.createElement("div");
+      b.id = "previewBanner"; b.className = "preview-banner";
+      b.innerHTML = `👀 Preview mode &mdash; this is how your guests see the portal. <button class="btn" onclick="exitPreview()">Back to my planner</button>`;
+      const gp = document.getElementById("guestPortal");
+      gp.insertBefore(b, gp.firstChild);
+    }
+  } else if(existingBanner){ existingBanner.remove(); }
   G.data = loaded;
   G.status = loaded.guest?.status || G.status;
   G.coupleName = `${loaded.couple?.bride_name||""} & ${loaded.couple?.groom_name||""}`.trim().replace(/^&\s*/,"").replace(/\s*&$/,"") || "Wedding";
@@ -2391,6 +2427,14 @@ function gpDownloadIcs(eventId){
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   a.download = (ev.name||"event").replace(/[^a-z0-9]/gi,"-").toLowerCase()+".ics";
   document.body.appendChild(a); a.click(); a.remove();
+}
+
+function exitPreview(){
+  G.previewMode = false;
+  document.body.classList.remove("preview-mode");
+  // Go back to the couple\'s planner.
+  location.hash = "#w=" + cloudToken;
+  location.reload();
 }
 
 function gpSignOut(){
