@@ -967,22 +967,28 @@ function renderEventCounts(){
   const el=document.getElementById("guestEventCounts"); if(!el) return;
   if(!S.events||!S.events.length){ el.style.display="none"; guestEventFilter=null; return; }
   el.style.display="block";
-  // drop the filter if the event no longer exists
   if(guestEventFilter && !S.events.some(e=>e.id===guestEventFilter)) guestEventFilter=null;
-  const pills=S.events.map(ev=>{
-    const heads=S.guests.filter(g=>guestInvitedTo(g,ev.id)).reduce((s,g)=>s+(Number(g.party)||1),0);
-    const yes=S.guests.filter(g=>guestInvitedTo(g,ev.id)&&g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1),0);
-    const active=guestEventFilter===ev.id;
-    const style=active
-      ? "background:var(--accent);color:#fff;margin:4px 8px 4px 0;font-size:13px;cursor:pointer;box-shadow:0 0 0 2px var(--accent-soft)"
-      : "background:var(--accent-soft);color:var(--accent-dark);margin:4px 8px 4px 0;font-size:13px;cursor:pointer";
-    const title=active?"Click to clear filter":"Click to show only these guests";
-    return `<span class="pill" style="${style}" onclick="filterGuestsByEvent('${ev.id}')" title="${title}">${esc(ev.name)}: <b>${heads}</b> invited · ${yes} yes${active?" \u2715":""}</span>`;
+  const boxes = S.events.map(ev => {
+    const invited = S.guests.filter(g => guestInvitedTo(g, ev.id));
+    const heads = invited.reduce((s,g) => s + (Number(g.party)||1), 0);
+    const yes  = invited.filter(g => g.rsvp==="yes").reduce((s,g)=>s+(Number(g.party)||1), 0);
+    const active = guestEventFilter === ev.id;
+    const dateStr = ev.date ? fmtDate(ev.date) : "";
+    const cardStyle = active
+      ? "border:2px solid var(--accent);box-shadow:0 0 0 3px var(--accent-soft)"
+      : "";
+    return `<div class="card" style="cursor:pointer;${cardStyle}" onclick="filterGuestsByEvent('${ev.id}')" title="${active?'Click to clear filter':'Click to filter table to these guests'}">
+      <div class="stat">${yes}</div>
+      <div class="stat-lab">Attending ${esc(ev.name)}${active?' <span style="color:var(--accent-dark);font-weight:700">\u2715</span>':''}</div>
+      <div class="stat-lab" style="margin-top:4px;font-size:11px">${dateStr?esc(dateStr)+" \u00b7 ":""}${heads} invited</div>
+    </div>`;
   }).join("");
-  const clearChip=guestEventFilter
-    ? `<button class="btn ghost sm" onclick="filterGuestsByEvent(null)" style="margin-left:4px">Show all events</button>`
+  const clearChip = guestEventFilter
+    ? `<button class="btn ghost sm" onclick="filterGuestsByEvent(null)" style="margin-left:8px">Show all events</button>`
     : "";
-  el.innerHTML=`<div class="stat-lab" style="margin-bottom:8px">Headcount per event ${clearChip}</div>${pills}`;
+  const cols = S.events.length === 1 ? "1fr" : (S.events.length === 2 ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(200px,1fr))");
+  el.innerHTML = `<div class="stat-lab" style="margin-bottom:10px">RSVPs per event ${clearChip}</div>
+    <div style="display:grid;grid-template-columns:${cols};gap:14px">${boxes}</div>`;
 }
 function filterGuestsByEvent(eid){
   guestEventFilter = (eid && guestEventFilter===eid) ? null : (eid||null);
