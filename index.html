@@ -1180,11 +1180,27 @@ function ppRenderEverything(){
     empty.style.display="none";
     tbody.innerHTML = PP.guests.map(g=>{
       const contact = [g.email, g.phone].filter(Boolean).join(" / ") || "—";
-      const rsvpSummary = (g.rsvps && g.rsvps.length) ? g.rsvps.map(r=>{
-        const ev = S.events.find(e=>e.id===r.event_id);
-        const nm = ev ? ev.name : r.event_id.slice(0,6);
-        return `<span class="pill" style="background:${r.attending?'#dcfce7':'#fee2e2'};color:${r.attending?'#166534':'#991b1b'};font-size:11px">${esc(nm)}${r.plus_ones?` +${r.plus_ones}`:""}</span>`;
-      }).join(" ") : `<span class="muted" style="font-size:12px">—</span>`;
+      let rsvpSummary;
+      if(g.rsvps && g.rsvps.length){
+        const yesCount = g.rsvps.filter(r=>r.attending===true).length;
+        const noCount = g.rsvps.filter(r=>r.attending===false).length;
+        const totalEv = (S.events||[]).length;
+        const summaryLabel = yesCount + " of " + (totalEv||g.rsvps.length) + " events";
+        const items = g.rsvps.map(r=>{
+          const ev = (S.events||[]).find(e=>e.id===r.event_id);
+          const nm = ev ? ev.name : "(removed event)";
+          const icon = r.attending===true ? "✓" : (r.attending===false ? "✕" : "?");
+          const color = r.attending===true ? "var(--good)" : (r.attending===false ? "var(--bad)" : "var(--muted)");
+          const plus = r.plus_ones>0 ? ` <span class="muted">+${r.plus_ones}</span>` : "";
+          return `<div style="padding:4px 0;font-size:13px"><span style="color:${color};font-weight:700;margin-right:6px">${icon}</span>${esc(nm)}${plus}</div>`;
+        }).join("");
+        rsvpSummary = `<details style="cursor:pointer">
+          <summary style="font-size:13px;outline:none;list-style:disclosure-closed">${esc(summaryLabel)}${noCount?` <span class="muted" style="font-size:12px">(${noCount} declined)</span>`:""}</summary>
+          <div style="margin-top:6px;padding:6px 10px;background:var(--accent-soft);border-radius:8px;min-width:200px">${items}</div>
+        </details>`;
+      } else {
+        rsvpSummary = `<span class="muted" style="font-size:12px">No reply yet</span>`;
+      }
       const status = g.status==="approved"
         ? `<span class="pill" style="background:#dcfce7;color:#166534">Approved</span>`
         : g.status==="pending"
