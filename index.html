@@ -2303,13 +2303,28 @@ function gpDaysUntil(dateStr){
 }
 function gpFmtDate(dateStr){
   if(!dateStr) return "";
-  const d = new Date(dateStr); if(isNaN(d)) return dateStr;
+  // Force local-time parse for bare YYYY-MM-DD inputs (otherwise treated as
+  // UTC midnight, shifting one day earlier in negative-UTC timezones).
+  const s = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + "T00:00:00" : dateStr;
+  const d = new Date(s); if(isNaN(d)) return dateStr;
   return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
 }
 function gpFmtTime(t){
   if(!t) return "";
-  const m = String(t).match(/(\d{1,2}):(\d{2})/); if(!m) return t;
-  let h=+m[1]; const mm=m[2]; const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${mm} ${ap}`;
+  const s = String(t).trim();
+  // Detect explicit "PM" / "AM" suffix from user input like "4:00 PM"
+  const ampm = /\b(am|pm)\b/i.exec(s);
+  const m = s.match(/(\d{1,2}):(\d{2})/); if(!m) return t;
+  let h = +m[1]; const mm = m[2];
+  let ap;
+  if(ampm){
+    ap = ampm[1].toUpperCase();
+    if(ap === "PM" && h < 12) h += 12;
+    else if(ap === "AM" && h === 12) h = 0;
+  }
+  ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${mm} ${ap}`;
 }
 function gpEventDateTime(ev){
   const dStr = ev.date || G.data?.couple?.wedding_date || "";
