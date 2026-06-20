@@ -1079,11 +1079,14 @@ function dRenderGuestLink(){
   const card = document.getElementById("dGuestLinkCard");
   const inp = document.getElementById("dGuestLinkInput");
   if(!card || !inp) return;
-  if(CLOUD && cloudToken && PP.entryToken){
+  if(!CLOUD || !cloudToken){ card.style.display = "none"; return; }
+  card.style.display = "block";
+  if(PP.entryToken){
     inp.value = ppGuestLinkUrl();
-    card.style.display = "block";
+    inp.placeholder = "";
   } else {
-    card.style.display = "none";
+    inp.value = "";
+    inp.placeholder = "Loading invite link…";
   }
 }
 
@@ -1608,6 +1611,7 @@ function hashRoute(){
   if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
   if(m=h.match(/[#&]g=([a-f0-9]+)/i)) return {kind:"guest", entry:m[1]};
+  if(/[#&]g(?:=|$|&)/.test(h)) return {kind:"guest_no_token"};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
   return {kind:"signup"};
 }
@@ -1617,6 +1621,7 @@ async function cloudBoot(){
   if(r.kind==="admin"){ showAdmin(r.key); return; }
   if(r.kind==="rsvp"){ await showRsvp(r.token); return; }
   if(r.kind==="guest"){ await guestBoot(r.entry); return; }
+  if(r.kind==="guest_no_token"){ showGuestNoToken(); return; }
   if(r.kind==="couple"){ cloudToken=r.token; await openCouple(); return; }
   showSignup();
 }
@@ -1805,6 +1810,15 @@ async function guestBoot(entry){
 async function guestLoad(){
   try{ return await rpc("wp_guest_load",{p_guest_token:G.guestToken}); }
   catch(e){ return {error:"network"}; }
+}
+
+function showGuestNoToken(){
+  showCloudAuth();
+  const c=document.getElementById("caCard"); c.style.maxWidth="440px";
+  c.innerHTML = `<div class="heart-badge">✉️</div><div class="kicker">Guest portal</div>
+    <h2>You need an invite link</h2>
+    <p class="lead">This page is for wedding guests. Please use the personal invite link the couple shared with you — it looks like <code style="background:var(--accent-soft);padding:2px 6px;border-radius:6px;font-size:13px">#g=...</code> with a code at the end.</p>
+    <p class="muted" style="font-size:13px;margin-top:14px">Are you the couple? <button class="link-btn" onclick="location.hash=''; location.reload()">Open your planner instead</button></p>`;
 }
 
 function showGuestSignin(err){
@@ -2137,10 +2151,12 @@ async function gpRsvpPO(eventId, val){
   }catch(e){}
 }
 
+const _markedReadIds = new Set();
 async function gpMarkAlertsRead(){
-  const unread = (G.alerts||[]).filter(a=>!a.read);
+  const unread = (G.alerts||[]).filter(a=>!a.read && !_markedReadIds.has(a.id));
   if(!unread.length) return;
   for(const a of unread){
+    _markedReadIds.add(a.id);
     try{ await rpc("wp_guest_mark_alert_read",{p_guest_token:G.guestToken, p_alert_id:a.id}); a.read = true; }
     catch(e){}
   }
@@ -2193,6 +2209,12 @@ function guestStartPolling(){
     if(G.status !== "approved"){ gpRenderPending(); return; }
     const newUnread = G.alerts.filter(a=>!a.read).length;
     if(newUnread !== prevUnread){ gpRenderTabs(); }
+    // Don't clobber the tab if the user is actively interacting with it
+    // (e.g. typing plus-ones into RSVP). Skip re-render when an input is focused.
+    const active = document.activeElement;
+    const insideMain = active && document.getElementById("gpMain")?.contains(active);
+    const isEditable = active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName);
+    if(insideMain && isEditable) return;
     if(G.tab) gpShowTab(G.tab);
   }, 15000);
 }
