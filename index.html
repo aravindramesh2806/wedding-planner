@@ -1611,10 +1611,16 @@ function stopPolling(){ if(pollT) clearInterval(pollT); pollT=null; }
 function showCloudAuth(){ document.getElementById("cloudauth").classList.add("show"); }
 function hideCloudAuth(){ document.getElementById("cloudauth").classList.remove("show"); }
 
+// Vanity guest-login URL for THIS deployment. Setting a token here makes
+// `<site>/#guestlogin` resolve to that couple's guest portal. Leave empty
+// for multi-tenant deploys (other couples still use their own #g=<token>).
+const VANITY_GUEST_ENTRY = "1a42b68114d28f929e88e601";
+
 function hashRoute(){
   const h=location.hash||""; let m;
   if(m=h.match(/[#&]admin(?:=([^&]+))?/)) return {kind:"admin", key:m[1]?decodeURIComponent(m[1]):null};
   if(m=h.match(/[#&]rsvp=([a-f0-9]+)/i)) return {kind:"rsvp", token:m[1]};
+  if(/[#&]guestlogin\b/i.test(h) && VANITY_GUEST_ENTRY) return {kind:"guest", entry:VANITY_GUEST_ENTRY, vanity:true};
   if(m=h.match(/[#&]g=([a-f0-9]+)/i)) return {kind:"guest", entry:m[1]};
   if(/[#&]g(?:=|$|&)/.test(h)) return {kind:"guest_no_token"};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
@@ -1800,6 +1806,13 @@ async function guestBoot(entry){
   G.entry = entry;
   hideCloudAuth();
   document.getElementById("cloudauth").classList.remove("show");
+  try{
+    const brief = await rpc("wp_guest_couple_brief", {p_guest_entry_token:entry});
+    if(brief && !brief.error){
+      G.coupleName = `${brief.bride_name||""} & ${brief.groom_name||""}`.trim().replace(/^&\s*/,"").replace(/\s*&$/,"") || "the wedding";
+      G.weddingDate = brief.wedding_date || null;
+    }
+  }catch(e){}
   // If we have a stored guest token, try to use it.
   const t = gpReadToken(entry);
   if(t){
@@ -1837,9 +1850,15 @@ function showGuestSignin(err){
          Continue with Google
        </button>
        <div class="gp-divider">or</div>` : "";
+  if(!G.signinAction) G.signinAction = "signin";
+  const coupleLine = G.coupleName ? `${esc(G.coupleName)}'s wedding` : "Wedding portal";
   c.innerHTML = `<div class="heart-badge">💍</div><div class="kicker">Wedding portal</div>
-    <h2>Sign in as a guest</h2>
-    <p class="lead">Welcome! Sign in to see the schedule, directions, and updates from the couple.</p>
+    <h2>${coupleLine}</h2>
+    <p class="lead">Sign in if you've been here before, or sign up to request access.</p>
+    <div class="gp-signin-tabs" style="margin-bottom:18px">
+      <button id="gsAct_signin" class="${G.signinAction==='signin'?'on':''}" onclick="gpSwitchAction('signin')">Sign in</button>
+      <button id="gsAct_signup" class="${G.signinAction==='signup'?'on':''}" onclick="gpSwitchAction('signup')">Sign up</button>
+    </div>
     ${googleBtn}
     <div class="gp-signin-tabs">
       <button id="gsTab_phone" class="on" onclick="gpSwitchSigninTab('phone')">Name + phone</button>
@@ -1850,23 +1869,38 @@ function showGuestSignin(err){
   gpSwitchSigninTab("phone");
 }
 
+function gpSwitchAction(which){
+  G.signinAction = which;
+  document.getElementById("gsAct_signin")?.classList.toggle("on", which==="signin");
+  document.getElementById("gsAct_signup")?.classList.toggle("on", which==="signup");
+  const cur = document.getElementById("gsTab_phone")?.classList.contains("on") ? "phone" : "email";
+  gpSwitchSigninTab(cur);
+  const e = document.getElementById("gsErr"); if(e) e.textContent = "";
+}
+
 function gpSwitchSigninTab(which){
   ["phone","email"].forEach(k=>{
     const b=document.getElementById("gsTab_"+k); if(b) b.classList.toggle("on", k===which);
   });
   const f=document.getElementById("gpSigninForm");
+  const isSignup = G.signinAction === "signup";
+  const btnLabel = isSignup ? "Request access" : "Sign in";
+  const helpText = isSignup
+    ? "We'll send your request — the couple will approve you."
+    : "Same first name + phone you used before signs you back in.";
   if(which==="phone"){
     f.innerHTML = `
       <div class="field"><label class="fl">Your first name</label><input type="text" id="gs_name" placeholder="e.g. Priya"></div>
       <div class="field"><label class="fl">Phone</label><input type="tel" id="gs_phone" placeholder="e.g. +91 98765 43210"></div>
-      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('phone')">Continue</button></div>
-      <p class="muted" style="font-size:12px;margin-top:10px">Coming back? Same first name + phone signs you back in. New here? The couple will approve you.</p>`;
+      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('phone')">${btnLabel}</button></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">${helpText}</p>`;
     setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
   } else {
     f.innerHTML = `
       <div class="field"><label class="fl">Your first name</label><input type="text" id="gs_name" placeholder="e.g. Priya"></div>
       <div class="field"><label class="fl">Email</label><input type="email" id="gs_email" placeholder="you@example.com"></div>
-      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('email')">Continue</button></div>`;
+      <div class="fs-actions"><button class="btn" onclick="gpDoSignin('email')">${btnLabel}</button></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">${helpText}</p>`;
     setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
   }
 }
@@ -1882,11 +1916,23 @@ async function gpDoSignin(method){
   if(method==="email" && !email){
     document.getElementById("gsErr").textContent = "Please enter your email."; return;
   }
+  const action = G.signinAction || "signin";
   try{
-    const r = await rpc("wp_guest_signup", {
-      p_guest_entry_token:G.entry, p_method:method,
-      p_name:name, p_email:email, p_phone:phone, p_google_sub:null
-    });
+    let r;
+    if(action === "signin"){
+      r = await rpc("wp_guest_signin_strict", {
+        p_guest_entry_token:G.entry, p_name:name, p_email:email, p_phone:phone
+      });
+      if(r && r.error === "not_found"){
+        document.getElementById("gsErr").innerHTML = `We don't have you on the guest list yet. <button class="link-btn" style="font-size:13px" onclick="gpSwitchAction('signup')">Sign up instead &rarr;</button>`;
+        return;
+      }
+    } else {
+      r = await rpc("wp_guest_signup", {
+        p_guest_entry_token:G.entry, p_method:method,
+        p_name:name, p_email:email, p_phone:phone, p_google_sub:null
+      });
+    }
     if(r.error){ document.getElementById("gsErr").textContent = "Couldn't sign in: "+r.error; return; }
     G.guestToken = r.guest_token; G.guestId = r.guest_id; G.status = r.status;
     gpSaveToken(G.entry, r.guest_token);
