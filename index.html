@@ -590,8 +590,9 @@ function renderHeader(){
 function renderCountdown(){
   const el=document.getElementById("countdown");
   if(!S.settings.date){ el.innerHTML=""; return; }
-  const now=new Date(); const d=new Date(S.settings.date+"T00:00:00");
-  let diff=Math.floor((d-now)/86400000);
+  const now=new Date(); now.setHours(0,0,0,0);
+  const d=new Date(S.settings.date+"T00:00:00");
+  let diff=Math.round((d-now)/86400000);
   if(diff<0){ el.innerHTML=`<div class="cd-box"><div class="cd-num">&#9825;</div><div class="cd-lab">Married!</div></div>`; return; }
   const wk=Math.floor(diff/7);
   el.innerHTML =
@@ -2499,10 +2500,29 @@ async function gpMarkAlertsRead(){
   gpRenderTabs();
 }
 
+// Parse a freeform time string like "4:00 PM", "16:00", "4 PM" into {h,m}
+// (24-hour). Returns null if unparseable.
+function parseTime24(s){
+  if(!s) return null;
+  const str = String(s).trim();
+  const ampm = /\b(am|pm)\b/i.exec(str);
+  const m = str.match(/(\d{1,2}):(\d{2})/) || str.match(/(\d{1,2})\s*(?:am|pm|AM|PM)/);
+  if(!m) return null;
+  let h = +m[1]; let mm = m[2] ? +m[2] : 0;
+  if(ampm){
+    const ap = ampm[1].toUpperCase();
+    if(ap === "PM" && h < 12) h += 12;
+    else if(ap === "AM" && h === 12) h = 0;
+  }
+  if(h < 0 || h > 23 || mm < 0 || mm > 59) return null;
+  return {h, m: mm};
+}
+
 function gpDownloadIcs(eventId){
   const ev = G.events.find(e=>e.id===eventId); if(!ev) return;
   const dStr = ev.date || G.data?.couple?.wedding_date; if(!dStr){ alert("This event needs a date first."); return; }
-  const tStr = ev.time || "10:00";
+  const t = parseTime24(ev.time) || {h:10, m:0};
+  const tStr = String(t.h).padStart(2,"0") + ":" + String(t.m).padStart(2,"0");
   const dt = new Date(dStr+"T"+tStr+":00");
   const end = new Date(dt.getTime()+2*60*60*1000);
   const z = n => String(n).padStart(2,"0");
