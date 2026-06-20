@@ -793,7 +793,7 @@ function renderEvents(){
     return `<div class="event">
       <div class="event-head">
         <div style="flex:1"><div class="et">${esc(ev.name)}</div>
-          <div class="item-meta">${ev.date?fmtDate(ev.date):"No date"}${ev.time?" · "+esc(ev.time):""}${ev.venue?" · 📍 "+esc(ev.venue):""}</div>
+          <div class="item-meta">${ev.date?fmtDate(ev.date):"No date"}${ev.time?" · "+esc(ev.time):""}${ev.venue?(" · 📍 "+esc(ev.venue)+(ev.hide_venue?` <span style="background:#fce7f3;color:var(--accent-dark);padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;margin-left:6px">Hidden from guests</span>`:"")):""}</div>
           ${dressLine}
           ${missingHint}</div>
         <span class="pill" style="background:var(--accent-soft);color:var(--accent-dark)">${dn}/${ts.length} done</span>
@@ -1358,7 +1358,11 @@ function openEventModal(editId){
     <div class="field"><label class="fl">Event name</label><input type="text" id="e_name" placeholder="e.g. Reception" value="${esc(ev?.name||"")}"></div>
     <div class="field"><label class="fl">Date</label><input type="date" id="e_date" value="${esc(ev?.date||"")}"></div>
     <div class="field"><label class="fl">Time (optional)</label><input type="text" id="e_time" placeholder="e.g. 6:00 PM" value="${esc(ev?.time||"")}"></div>
-    <div class="field"><label class="fl">Venue (optional)</label><input type="text" id="e_venue" value="${esc(ev?.venue||"")}"></div>
+    <div class="field"><label class="fl">Venue (optional)</label><input type="text" id="e_venue" value="${esc(ev?.venue||"")}">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="e_hide_venue" ${ev?.hide_venue?"checked":""} style="width:16px;height:16px;cursor:pointer">
+        Hide venue, map &amp; parking from guests for now (you can reveal later)
+      </label></div>
     <div class="muted" style="font-size:12px;font-weight:600;margin:14px 0 4px;letter-spacing:.06em;text-transform:uppercase">Guest portal info</div>
     <div class="field"><label class="fl">Dress code (shown to guests)</label><input type="text" id="e_dress" placeholder="e.g. Traditional Indian formal" value="${esc(ev?.dress_code||"")}"></div>
     <div class="field"><label class="fl">Map link (Google/Apple Maps URL)</label><input type="url" id="e_map" placeholder="https://maps.google.com/..." value="${esc(ev?.map_link||"")}"></div>
@@ -1370,6 +1374,7 @@ function openEventModal(editId){
 function addEvent(){
   const name=val("e_name"); if(!name){alert("Enter an event name");return;}
   S.events.push({id:uid(),name,date:val("e_date"),time:val("e_time"),venue:val("e_venue"),
+                 hide_venue: document.getElementById("e_hide_venue")?.checked || false,
                  dress_code:val("e_dress"), map_link:val("e_map"),
                  parking_notes:val("e_park"), know_before_notes:val("e_know"),
                  tasks:[]});
@@ -1379,6 +1384,7 @@ function saveEventEdit(id){
   const ev = S.events.find(e=>e.id===id); if(!ev) return;
   const name=val("e_name"); if(!name){alert("Enter an event name");return;}
   ev.name=name; ev.date=val("e_date"); ev.time=val("e_time"); ev.venue=val("e_venue");
+  ev.hide_venue = document.getElementById("e_hide_venue")?.checked || false;
   ev.dress_code=val("e_dress"); ev.map_link=val("e_map");
   ev.parking_notes=val("e_park"); ev.know_before_notes=val("e_know");
   save(); closeModal(); renderAll();
@@ -2169,7 +2175,7 @@ function gpRenderHome(){
       <div class="lab">${days==null?"See you soon":(days>0?"days to go":(days===0?"today is the day!":"the big day was "+(-days)+" days ago"))}</div>
     </div>
     ${next ? `<div class="gp-next"><div class="knm">Up next</div><h3>${esc(next.ev.name||"Event")}</h3>
-      <div class="meta">${esc(gpEventDateTime(next.ev))}${next.ev.venue?` · 📍 ${esc(next.ev.venue)}`:""}</div>
+      <div class="meta">${esc(gpEventDateTime(next.ev))}${(next.ev.venue && !next.ev.hide_venue)?` · 📍 ${esc(next.ev.venue)}`:""}</div>
       <button class="btn" onclick="gpShowTab('schedule')">View full schedule →</button>
     </div>` : ""}
     ${recentAlerts.length?`<div class="gp-card"><h3>Latest updates</h3>
@@ -2201,11 +2207,11 @@ function gpRenderSchedule(){
         <div class="gp-event-when">${esc(gpEventDateTime(ev))}</div>
       </div>
       <div class="gp-event-body">
-        ${ev.venue?`<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`:""}
+        ${ev.venue && !ev.hide_venue?`<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`:(ev.hide_venue?`<div class="gp-row"><span class="k">Where</span><span class="muted">Venue revealed closer to the date</span></div>`:"")}
         ${ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span>${esc(ev.dress_code)}</span></div>`:""}
         ${ev.know_before_notes?`<div class="gp-row" style="display:block"><div class="k">Know before you go</div><div style="white-space:pre-wrap;font-size:14px;margin-top:4px">${esc(ev.know_before_notes)}</div></div>`:""}
         <div class="gp-event-actions">
-          ${ev.map_link?`<a class="btn ghost" href="${esc(ev.map_link)}" target="_blank" rel="noopener">🗺 Directions</a>`:(ev.venue?`<a class="btn ghost" href="https://maps.google.com/?q=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">🗺 Directions</a>`:"")}
+          ${(!ev.hide_venue && ev.map_link)?`<a class="btn ghost" href="${esc(ev.map_link)}" target="_blank" rel="noopener">🗺 Directions</a>`:((!ev.hide_venue && ev.venue)?`<a class="btn ghost" href="https://maps.google.com/?q=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">🗺 Directions</a>`:"")}
           <button class="btn ghost" onclick="gpDownloadIcs('${esc(ev.id||"")}')">📅 Add to calendar</button>
         </div>
       </div>
@@ -2216,6 +2222,7 @@ function gpRenderSchedule(){
 function gpRenderVenues(){
   const venues = {};
   G.events.forEach(ev=>{
+    if(ev.hide_venue) return;
     const key = (ev.venue||"").trim(); if(!key) return;
     if(!venues[key]) venues[key] = {name:key, map_link:ev.map_link||"", parking:ev.parking_notes||"", events:[]};
     venues[key].events.push(ev.name||"Event");
