@@ -408,11 +408,24 @@
           <option value="side">Sort: Side</option>
           <option value="rsvp">Sort: RSVP</option>
         </select>
+        <select id="guestRsvpFilter" onchange="renderGuests()" style="width:auto" title="Filter by RSVP">
+          <option value="">RSVP: All</option>
+          <option value="yes">RSVP: ✓ Yes</option>
+          <option value="no">RSVP: ✗ No</option>
+          <option value="maybe">RSVP: Maybe</option>
+          <option value="pending">RSVP: Pending</option>
+        </select>
+        <select id="guestStayFilter" onchange="renderGuests()" style="width:auto" title="Filter by accommodation">
+          <option value="">Stay: All</option>
+          <option value="yes">Stay: Needs a room</option>
+          <option value="no">Stay: No room needed</option>
+        </select>
         <button class="btn ghost" onclick="exportGuestsCsv()" title="Download CSV">&#11015; CSV</button>
         <button class="btn ghost" onclick="printGuests()" title="Print">&#128424; Print</button>
       </div>
       <div id="guestMealSummary" style="margin-top:10px"></div>
     </div>
+    <div id="guestFilterSummary" style="display:none;background:var(--accent-soft);border-radius:9px;padding:8px 12px;margin-bottom:10px;font-size:13px"></div>
     <div class="card">
       <table><thead><tr><th>Name</th><th>Side</th><th style="text-align:center">Party</th><th>Meal</th><th style="text-align:center">Invite</th><th style="text-align:center">Stay</th><th>RSVP</th><th></th></tr></thead>
       <tbody id="guestRows"></tbody></table>
@@ -836,6 +849,13 @@ function guestInvitedTo(g,eid){ if(!g.events) return true; if(g.events[eid]===un
 function renderGuests(){
   const rows=document.getElementById("guestRows");
   document.getElementById("guestEmpty").style.display=S.guests.length?"none":"block";
+  // Lazy backfill: guests added before invite links existed get synced now.
+  if(CLOUD && cloudToken){
+    const missing = S.guests.filter(g => !g.portal_token);
+    if(missing.length){
+      (async()=>{ for(const g of missing){ await syncGuestToPortal(g); } })();
+    }
+  }
   const tag={yes:["t-yes","Yes"],no:["t-no","No"],maybe:["t-maybe","Maybe"],pending:["t-pending","Pending"]};
   const qEl=document.getElementById("guestSearch"); const sEl=document.getElementById("guestSort");
   const q=(qEl?qEl.value:"").trim().toLowerCase();
@@ -843,6 +863,11 @@ function renderGuests(){
   let list=S.guests.slice();
   if(q) list=list.filter(g=>(g.name||"").toLowerCase().includes(q));
   if(guestEventFilter) list=list.filter(g=>guestInvitedTo(g,guestEventFilter));
+  const rsvpF = document.getElementById("guestRsvpFilter")?.value || "";
+  if(rsvpF) list=list.filter(g=>(g.rsvp||"pending")===rsvpF);
+  const stayF = document.getElementById("guestStayFilter")?.value || "";
+  if(stayF==="yes") list=list.filter(g=>!!g.accommodation);
+  else if(stayF==="no") list=list.filter(g=>!g.accommodation);
   const rsvpOrder={yes:0,maybe:1,pending:2,no:3};
   list.sort((a,b)=>{
     if(sort==="side"){ const d=(sideKeyword(a.side)||"zz").localeCompare(sideKeyword(b.side)||"zz"); if(d) return d; }
@@ -881,8 +906,34 @@ function renderGuests(){
   document.getElementById("gPending").textContent=S.guests.filter(g=>g.rsvp==="pending").length;
   const sent=S.guests.filter(g=>g.invited).length;
   document.getElementById("gSentBreak").textContent=`${sent} sent · ${S.guests.length-sent} to send`+((S.guests.filter(g=>g.accommodation).length)?` · ${S.guests.filter(g=>g.accommodation).length} need a room`:"");
+  renderGuestFilterSummary(list);
   renderMealSummary();
   renderEventCounts();
+}
+
+function renderGuestFilterSummary(filteredList){
+  const summary = document.getElementById("guestFilterSummary"); if(!summary) return;
+  const parts = [];
+  const ev = guestEventFilter ? S.events.find(e=>e.id===guestEventFilter) : null;
+  if(ev) parts.push(`📅 ${esc(ev.name)}`);
+  const rsvpF = document.getElementById("guestRsvpFilter")?.value;
+  if(rsvpF) parts.push(`RSVP: ${rsvpF}`);
+  const stayF = document.getElementById("guestStayFilter")?.value;
+  if(stayF) parts.push(stayF==="yes" ? "Needs a room" : "No room needed");
+  const q = document.getElementById("guestSearch")?.value?.trim();
+  if(q) parts.push(`name: "${esc(q)}"`);
+  if(!parts.length){ summary.style.display = "none"; return; }
+  const heads = filteredList.reduce((s,g)=>s+(Number(g.party)||1),0);
+  summary.style.display = "block";
+  summary.innerHTML = `<b>Showing ${filteredList.length} guests (${heads} people)</b> · ${parts.join(" · ")} <button class="link-btn" style="margin-left:8px;color:var(--accent-dark);font-weight:600" onclick="clearGuestFilters()">Clear all</button>`;
+}
+
+function clearGuestFilters(){
+  guestEventFilter = null;
+  const e1 = document.getElementById("guestRsvpFilter"); if(e1) e1.value = "";
+  const e2 = document.getElementById("guestStayFilter"); if(e2) e2.value = "";
+  const e3 = document.getElementById("guestSearch"); if(e3) e3.value = "";
+  renderGuests();
 }
 function renderMealSummary(){
   const el=document.getElementById("guestMealSummary"); if(!el) return;
@@ -1459,10 +1510,19 @@ function copyGuestInvite(id){
   }).catch(()=>alert("Couldn't copy. URL:\n"+url));
 }
 
-function openGuestInviteModal(id){
+async function openGuestInviteModal(id){
   const g = S.guests.find(x=>x.id===id); if(!g) return;
-  if(!g.portal_token){ syncGuestToPortal(g); }
-  const url = guestInviteUrl(g) || "Generating link…";
+  if(!g.portal_token){
+    showModal(`<h3>Setting up ${esc(g.name)}'s invite link\u2026</h3>
+      <p class="muted" style="font-size:13px;text-align:center;padding:18px 0">One sec \u2014 generating their personal link.</p>`);
+    await syncGuestToPortal(g);
+    if(!g.portal_token){
+      closeModal();
+      alert("Couldn't generate the invite link. Check your connection and try again.");
+      return;
+    }
+  }
+  const url = guestInviteUrl(g);
   const phoneClean = (g.phone||"").replace(/\D/g,"");
   const msg = `Hi ${g.name.split(/\s+/)[0]||""}! Here's your personal invite to our wedding portal — schedule, venues, RSVP all in one place: ${url}`;
   showModal(`<h3>Invite link for ${esc(g.name)}</h3>
