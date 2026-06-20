@@ -2260,6 +2260,9 @@ function guestEnterPortal(loaded){
 
 function gpRenderPending(){
   document.getElementById("gpTabs").innerHTML = "";
+  // Hide top-right actions (bell, sign-out) while pending — nothing to do there yet.
+  const actions = document.querySelector("#guestPortal .gp-actions");
+  if(actions) actions.style.display = "none";
   document.getElementById("gpMain").innerHTML = `
     <div class="gp-pending">
       <div class="emoji">⏳</div>
@@ -2270,6 +2273,9 @@ function gpRenderPending(){
 }
 
 function gpRenderTabs(){
+  // Restore the top-right actions in case we were previously pending.
+  const actions = document.querySelector("#guestPortal .gp-actions");
+  if(actions) actions.style.display = "";
   const unread = (G.alerts||[]).filter(a=>!a.read).length;
   const tabs = [
     {k:"home", label:"Home"},
@@ -2288,6 +2294,9 @@ function gpRenderTabs(){
 }
 
 function gpShowTab(name){
+  // Hard gate: a pending/rejected guest can never view tabs. The bell, a
+  // direct JS call, or any other navigation falls through to the pending screen.
+  if(G.status !== "approved"){ gpRenderPending(); return; }
   G.tab = name; gpRenderTabs();
   const m = document.getElementById("gpMain");
   if(name==="home")     m.innerHTML = gpRenderHome();
@@ -2402,7 +2411,7 @@ function gpRenderSchedule(){
         <div class="gp-event-when">${esc(gpEventDateTime(ev))}</div>
       </div>
       <div class="gp-event-body">
-        ${(()=>{ const hidden = isVenueHiddenForGuests(ev); if(ev.venue && !hidden) return `<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`; if(hidden){ const revealMsg = ev.reveal_at ? `Venue revealed on ${esc(gpFmtDate(ev.reveal_at))}` : "Venue revealed closer to the date"; return `<div class="gp-row"><span class="k">Where</span><span class="muted">${revealMsg}</span></div>`; } return ""; })()}
+        ${(()=>{ const hidden = isVenueHiddenForGuests(ev); if(ev.venue && !hidden) return `<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`; if(hidden){ const revealMsg = "To be updated"; return `<div class="gp-row"><span class="k">Where</span><span class="muted">${revealMsg}</span></div>`; } return ""; })()}
         ${ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span>${esc(ev.dress_code)}</span></div>`:""}
         ${ev.know_before_notes?`<div class="gp-row" style="display:block"><div class="k">Know before you go</div><div style="white-space:pre-wrap;font-size:14px;margin-top:4px">${esc(ev.know_before_notes)}</div></div>`:""}
         <div class="gp-event-actions">
