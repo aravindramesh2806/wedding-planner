@@ -200,7 +200,11 @@
     body.print-guests table{font-size:12px}
   }
   /* ------- Guest Portal ------- */
-  #guestPortal{min-height:100vh;background:var(--bg)}
+  #guestPortal{min-height:100vh;background:var(--bg);position:fixed;inset:0;overflow:auto;z-index:90}
+  body.guest-mode > header.top,
+  body.guest-mode > nav.tabs,
+  body.guest-mode > div.wrap,
+  body.guest-mode > .fs { display:none !important }
   .gp-top{position:sticky;top:0;z-index:50;background:linear-gradient(160deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08)}
   .gp-top-inner{max-width:780px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
   .gp-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
@@ -1538,6 +1542,7 @@ function lockTry(){
 }
 
 function enterApp(){
+  document.body.classList.remove("guest-mode");
   hideFS();
   applyTheme(S.settings.theme);
   switchTab("dashboard");
@@ -1814,6 +1819,7 @@ async function guestLoad(){
 
 function showGuestNoToken(){
   showCloudAuth();
+  document.body.classList.add("guest-mode");
   const c=document.getElementById("caCard"); c.style.maxWidth="440px";
   c.innerHTML = `<div class="heart-badge">✉️</div><div class="kicker">Guest portal</div>
     <h2>You need an invite link</h2>
@@ -1823,6 +1829,7 @@ function showGuestNoToken(){
 
 function showGuestSignin(err){
   showCloudAuth();
+  document.body.classList.add("guest-mode");
   const c=document.getElementById("caCard"); c.style.maxWidth="440px";
   const googleBtn = GOOGLE_CLIENT_ID
     ? `<button class="gp-google-btn" onclick="gpGoogleSignin()">
@@ -1850,14 +1857,14 @@ function gpSwitchSigninTab(which){
   const f=document.getElementById("gpSigninForm");
   if(which==="phone"){
     f.innerHTML = `
-      <div class="field"><label class="fl">Your full name</label><input type="text" id="gs_name" placeholder="e.g. Priya Sharma"></div>
+      <div class="field"><label class="fl">Your first name</label><input type="text" id="gs_name" placeholder="e.g. Priya"></div>
       <div class="field"><label class="fl">Phone</label><input type="tel" id="gs_phone" placeholder="e.g. +91 98765 43210"></div>
       <div class="fs-actions"><button class="btn" onclick="gpDoSignin('phone')">Continue</button></div>
-      <p class="muted" style="font-size:12px;margin-top:10px">If the couple pre-added you with the same name & phone you'll get in instantly. Otherwise they'll approve you.</p>`;
+      <p class="muted" style="font-size:12px;margin-top:10px">Coming back? Same first name + phone signs you back in. New here? The couple will approve you.</p>`;
     setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
   } else {
     f.innerHTML = `
-      <div class="field"><label class="fl">Your name</label><input type="text" id="gs_name" placeholder="e.g. Priya Sharma"></div>
+      <div class="field"><label class="fl">Your first name</label><input type="text" id="gs_name" placeholder="e.g. Priya"></div>
       <div class="field"><label class="fl">Email</label><input type="email" id="gs_email" placeholder="you@example.com"></div>
       <div class="fs-actions"><button class="btn" onclick="gpDoSignin('email')">Continue</button></div>`;
     setTimeout(()=>document.getElementById("gs_name")?.focus(),50);
@@ -1942,6 +1949,7 @@ function guestEnterPortal(loaded){
   (loaded.rsvps||[]).forEach(r=> G.rsvpsByEvent[r.event_id] = r);
   G.alerts = loaded.alerts || [];
   hideCloudAuth();
+  document.body.classList.add("guest-mode");
   document.getElementById("guestPortal").style.display = "block";
   document.body.style.background = "var(--bg)";
   document.getElementById("gpCoupleName").textContent = G.coupleName;
@@ -2188,6 +2196,8 @@ function gpSignOut(){
   G.guestToken=null; G.guestId=null; G.status=null;
   guestStopPolling();
   document.getElementById("guestPortal").style.display="none";
+  // Stay in guest-mode for the sign-in screen — only the couple's own
+  // portal should drop the class (handled in enterApp / openCouple).
   showGuestSignin();
 }
 
