@@ -1036,7 +1036,78 @@ function ppEnsureLoaded(force){
   const stale = (Date.now() - PP.lastLoad) > 4000;
   if(!force && !stale && PP.entryToken) return Promise.resolve();
   return Promise.all([ ppLoadEntryToken(), ppLoadSlug(), ppLoadGuests(), ppLoadAlertHistory() ])
-    .then(()=>{ PP.lastLoad = Date.now(); ppRenderEverything(); });
+    .then(()=>{ PP.lastLoad = Date.now(); mergePortalGuestsIntoPlanning(); ppRenderEverything(); });
+}
+
+// Sync portal sign-ups into the couple's planning S.guests list so the couple
+// doesn't maintain two lists. Matches by phone first (most reliable) then by
+// case-insensitive name. New portal guests get sensible defaults; existing
+// rows are enriched with phone/email/portal_id if missing.
+function mergePortalGuestsIntoPlanning(){
+  if(!CLOUD || !cloudToken || !PP.guests || !PP.guests.length) return;
+  S.guests = S.guests || [];
+  let changed = false;
+
+  // Normalised lookups
+  const norm = s => (s||"").trim().toLowerCase();
+  const ph4 = s => { if(!s) return ""; const d = String(s).replace(/\D/g,""); return d.length>=4 ? d.slice(-4) : ""; };
+  const planningByName = new Map();
+  const planningByPhone4 = new Map();
+  for(const g of S.guests){
+    if(g.name) planningByName.set(norm(g.name), g);
+    const p4 = ph4(g.phone); if(p4) planningByPhone4.set(p4, g);
+  }
+
+  for(const pg of PP.guests){
+    if(pg.status === "rejected") continue;
+    // Pre-added portal entries were created BY the couple's planning list, so
+    // they\'re already represented — skip to avoid creating shadow rows.
+    if(pg.signin_method === "pre_added") continue;
+    const p4 = ph4(pg.phone);
+    const existing = (p4 && planningByPhone4.get(p4)) || planningByName.get(norm(pg.name));
+
+    if(existing){
+      // Enrich existing planning row with any contact info that was missing
+      let touched = false;
+      if(!existing.phone && pg.phone){ existing.phone = pg.phone; touched = true; }
+      if(!existing.email && pg.email){ existing.email = pg.email; touched = true; }
+      if(!existing.portal_guest_id){ existing.portal_guest_id = pg.id; touched = true; }
+      if(touched) changed = true;
+      continue;
+    }
+
+    // Brand-new portal sign-up → add to planning list with sensible defaults
+    // Derive overall RSVP from per-event RSVPs if available.
+    let overallRsvp = "pending";
+    if(Array.isArray(pg.rsvps) && pg.rsvps.length){
+      const anyYes = pg.rsvps.some(r => r.attending === true);
+      const allNo  = pg.rsvps.every(r => r.attending === false);
+      overallRsvp = anyYes ? "yes" : (allNo ? "no" : "pending");
+    }
+    const partySize = 1 + (pg.rsvps||[]).reduce((m,r)=>Math.max(m, Number(r.plus_ones)||0), 0);
+    S.guests.push({
+      id: uid(),
+      name: pg.name || "(unnamed guest)",
+      phone: pg.phone || "",
+      email: pg.email || "",
+      side: "",
+      party: partySize,
+      meal: "",
+      invited: true,
+      accommodation: false,
+      rsvp: overallRsvp,
+      portal_guest_id: pg.id,
+      source: "portal"
+    });
+    changed = true;
+  }
+
+  if(changed){
+    save();
+    // No renderAll() here — caller (ppEnsureLoaded) follows with ppRenderEverything,
+    // but we also need the Guests tab to refresh if it\'s open.
+    if(document.querySelector('.panel[data-panel="guests"].active')){ renderGuests(); }
+  }
 }
 
 async function ppLoadSlug(){
