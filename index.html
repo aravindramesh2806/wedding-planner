@@ -842,8 +842,8 @@ function addEventTask(eid){
   const ev=S.events.find(e=>e.id===eid); ev.tasks=ev.tasks||[]; ev.tasks.push({id:uid(),title:v,done:false});
   save(); renderAll();
 }
-function toggleEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); const t=ev.tasks.find(x=>x.id===tid); t.done=!t.done; save(); renderAll(); }
-function delEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); ev.tasks=ev.tasks.filter(x=>x.id!==tid); save(); renderAll(); }
+function toggleEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); if(!ev) return; ev.tasks=ev.tasks||[]; const t=ev.tasks.find(x=>x.id===tid); if(!t) return; t.done=!t.done; save(); renderAll(); }
+function delEventTask(eid,tid){ const ev=S.events.find(e=>e.id===eid); if(!ev) return; ev.tasks=(ev.tasks||[]).filter(x=>x.id!==tid); save(); renderAll(); }
 
 /* ---------------- Render: guests ---------------- */
 function guestInvitedTo(g,eid){ if(!g.events) return true; if(g.events[eid]===undefined) return true; return !!g.events[eid]; }
@@ -1249,7 +1249,8 @@ async function ppUploadCsv(){
   if(!text){ alert("Paste at least one row."); return; }
   const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
   if(lines.length < 2){ alert("Need a header row + at least one guest row."); return; }
-  const header = lines[0].split(",").map(s=>s.trim().toLowerCase());
+  const parseCsvHeader = (line)=>{ const out=[]; let cur="", inQ=false; for(let i=0;i<line.length;i++){ const c=line[i]; if(inQ){ if(c==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(c==='"'){inQ=false;} else cur+=c; } else { if(c===','){out.push(cur.trim().toLowerCase()); cur="";} else if(c==='"'&&cur===""){inQ=true;} else cur+=c; } } out.push(cur.trim().toLowerCase()); return out; };
+  const header = parseCsvHeader(lines[0]);
   const idx = {
     name: header.indexOf("name"),
     email: header.indexOf("email"),
@@ -1257,8 +1258,9 @@ async function ppUploadCsv(){
     po: header.indexOf("plus_ones_default")
   };
   if(idx.name === -1){ alert("CSV must include a 'name' column."); return; }
+  function parseCsvRow(line){ const out=[]; let cur="", inQ=false; for(let i=0;i<line.length;i++){ const c=line[i]; if(inQ){ if(c==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(c==='"'){inQ=false;} else cur+=c; } else { if(c===','){out.push(cur.trim()); cur="";} else if(c==='"'&&cur===""){inQ=true;} else cur+=c; } } out.push(cur.trim()); return out; }
   const rows = lines.slice(1).map(l=>{
-    const parts = l.split(",").map(s=>s.trim());
+    const parts = parseCsvRow(l);
     return {
       name: parts[idx.name] || "",
       email: idx.email>=0 ? (parts[idx.email]||null) : null,
@@ -1525,7 +1527,7 @@ async function openGuestInviteModal(id){
   }
   const url = guestInviteUrl(g);
   const phoneClean = (g.phone||"").replace(/\D/g,"");
-  const msg = `Hi ${g.name.split(/\s+/)[0]||""}! Here's your personal invite to our wedding portal — schedule, venues, RSVP all in one place: ${url}`;
+  const msg = `Hi ${(g.name||"").split(/\s+/)[0]||"there"}! Here's your personal invite to our wedding portal — schedule, venues, RSVP all in one place: ${url}`;
   showModal(`<h3>Invite link for ${esc(g.name)}</h3>
     <p class="muted" style="font-size:13px">One-tap link &mdash; they're signed in automatically as themselves, no form to fill.</p>
     <div class="field"><label class="fl">Personal invite URL</label>
@@ -1783,7 +1785,8 @@ async function cloudSave(){ const r=await rpc("wp_save",{p_token:cloudToken,p_da
 async function cloudLoad(){ return await rpc("wp_load",{p_token:cloudToken}); }
 
 function startPolling(){ stopPolling(); pollT=setInterval(async()=>{
-  try{ const r=await cloudLoad(); if(r&&!r.error&&r.updated_at&&r.updated_at!==cloudUpdatedAt){ cloudUpdatedAt=r.updated_at; adoptCouple(r); } }catch(e){} },7000); }
+  if(document.visibilityState === "hidden") return;
+  try{ const r=await cloudLoad(); if(r&&!r.error&&r.updated_at&&r.updated_at!==cloudUpdatedAt){ cloudUpdatedAt=r.updated_at; adoptCouple(r); } }catch(e){} },30000); }
 function stopPolling(){ if(pollT) clearInterval(pollT); pollT=null; }
 
 /* ----- cloud screens: signup / couple / admin ----- */
@@ -2560,6 +2563,7 @@ function gpSignOut(){
 function guestStartPolling(){
   guestStopPolling();
   G.pollT = setInterval(async ()=>{
+    if(document.visibilityState === "hidden") return;
     const r = await guestLoad(); if(!r || r.error) return;
     const prevStatus = G.status;
     const prevUnread = (G.alerts||[]).filter(a=>!a.read).length;
