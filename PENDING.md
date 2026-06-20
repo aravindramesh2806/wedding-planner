@@ -14,7 +14,7 @@ A free, multi-tenant wedding-planning web app. Single-file front end (`index.htm
 
 ## How it works (architecture)
 - Routing by URL hash: `#admin` (admin), `#rsvp=TOKEN` (public guest RSVP), `#w=TOKEN` (couple planner), none = signup.
-- Couple data is one JSON blob `{tasks,budget,events,guests,settings}` stored per couple in Supabase.
+- Couple data is one JSON blob `{tasks,budget,events,guests,vendors,settings}` stored per couple in Supabase.
 - Secure RPCs (RLS on, SECURITY DEFINER): `wp_signup`, `wp_load`, `wp_save`, `wp_rsvp_info`,
   `wp_rsvp_submit`, `wp_admin_list`, `wp_admin_delete`. Tables locked down; only these functions are exposed.
 - Front end edits the in-memory `S` object, calls `save()` (writes localStorage + debounced `wp_save` to cloud),
@@ -27,11 +27,14 @@ A free, multi-tenant wedding-planning web app. Single-file front end (`index.htm
   Then GitHub Pages rebuilds in ~1 min.
 - GOTCHA 1: Do NOT run git from the assistant's sandbox — it leaves `.git/*.lock` files that block the user.
   If a lock error appears, user runs: `find .git -name '*.lock' -delete` then commits again.
-- GOTCHA 2: It's now a PWA with a service worker — after a deploy, refresh once to clear the cached old version.
+- GOTCHA 2: It's now a PWA with a service worker — after a deploy, refresh once (Cmd+Shift+R) to clear the cached old version.
 - GOTCHA 3: `wp_save` overwrites the whole data blob. To edit a live couple's data, always
   load → merge → save (never blind-save).
 - GOTCHA 4: The assistant's host file tools (Read/Edit/Write) get EPERM on the repo folder;
-  edit via shell (python/sed) instead, or edit the backup folder `~/Documents/Claude/Projects/Wedding Planner`.
+  edit via shell (python/sed) instead, or edit the backup folder `~/Documents/Claude/Projects/Wedding Planner`
+  and then `cp` it into the repo folder before pushing.
+- GOTCHA 5: After running `node --check` on inline JS, always verify by viewing the actual file — sed/python
+  anchor matches can drift if earlier edits already moved things around.
 
 ## Already done
 Couple signup + private links, cross-device sync, admin console (list, signup link, planner links,
@@ -40,38 +43,47 @@ accommodation/Stay toggle, RSVP dropdown), per-event guest tracking (expand arro
 headcount per event), per-event checklists with notes dropdown, public guest RSVP, currency (USD/INR),
 8 themes, PWA (installable, heart icon), Lucidchart-style flow diagrams (flows.html).
 
-## UNPUSHED local changes (push first)
-The "accommodation (Stay)" column and "per-event guest tracking" are built locally but may not be pushed yet.
-Run the deploy command above first.
+### Shipped 2026-06-15
+- **Guest list tools**: live name search, sort (Name / Side / RSVP), meal-summary pills (counts
+  weighted by party size), Download CSV (Name, Side, Party, Meal, Invited, Accommodation, RSVP),
+  and Print button (CSS isolates the guests panel for print).
+- **Clickable event-headcount pills**: click any pill in "Headcount per event" to filter the guest
+  list to only that event's invitees. Active pill goes solid + ✕; "Show all events" button clears
+  the filter. Works alongside search + sort.
+- **Budget upgrades**: each item now has `dueDate`, `paidBy`, `paid` fields. Table shows overdue
+  (red) / upcoming (accent within 14 days) / paid (muted ✓) styling on the Due column. Inline
+  paid checkbox per row. Add-budget modal updated. New **Spend by category** card with an
+  inline SVG bar chart (hides itself when nothing has actual spend).
+- **Vendors tab**: new top-level tab with name / category / contact / status (researching / booked /
+  paid) / cost / paid columns; expandable notes per row; summary cards (count, committed total,
+  paid total). `S.vendors` is wired into `cloudPayload()` and `adoptCouple()`, with a safety
+  `if(!S.vendors) S.vendors=[]` on load for existing couples whose blob predates the field.
 
 ## PENDING FEATURES TO BUILD
+*(none from the original handoff — pick the next one)*
 
-### 1. Guest list tools
-- Search box above the guest table that filters rows by name (live).
-- Sort control: by name, by side, by RSVP.
-- Meal/dietary summary: a small line or pills showing counts per meal value (e.g., Veg: 12, Chicken: 4).
-- Export: a "Download CSV" button (name, side, party, meal, invited, accommodation, rsvp) and a "Print" button.
-- All client-side in renderGuests / the Guests panel.
+Suggestions to consider:
+- **Customizable guest portal**: let the couple style their guest-facing portal —
+  upload a cover photo / hero banner, set a custom welcome message, write a
+  "Our story" section (how we met, our journey), add a photo gallery, pick
+  fonts and a color palette beyond the 8 built-in themes. Also: optional
+  custom domain alias (so the URL feels personal), and per-event hero images.
+  This is a high-value differentiator vs Joy/Zola — your portal should feel
+  like *your* wedding, not a template.
+- **Seating chart**: assign guests to tables; counts per table; print-friendly layout.
+- **Day-of timeline**: minute-by-minute schedule with location + point person per item.
+- **Save-the-date / RSVP email templates**: copy-to-clipboard blocks pre-filled with the couple's
+  link.
+- **Thank-you note tracker**: per-guest sent/not-sent toggle, like the existing Invite checkbox.
+- **Plus-one tracking**: explicit plus-one flag per guest, with name slot.
+- **Notifications**: simple "what's due in the next N days" digest on the dashboard, pulling
+  from budget dueDates + event dates.
 
-### 2. Budget upgrades
-- Add fields to each budget item: due date, paid-by (free text or Bride/Groom/Both), paid status.
-- Show overdue/upcoming due dates.
-- A spend-by-category chart (can use a simple inline SVG bar chart or Chart.js from CDN — note the
-  PWA service worker is network-first so CDN is fine online).
-- Budget data is `S.budget` array of {id,item,category,est,actual,...}. Update add-budget modal + table + dashboard.
-
-### 3. Vendor tracker (new tab)
-- New "Vendors" tab + panel (add a tab in the nav and a panel section).
-- Each vendor: name, type/category (photographer, caterer, venue, decor, etc.), contact (phone/email),
-  cost, amount paid, status (researching / booked / paid), notes.
-- Add `S.vendors` array to the data model (default []), include it in `cloudPayload()` and `adoptCouple()`
-  so it syncs. Table + add-vendor modal + maybe a total committed/paid summary.
-
-### Housekeeping
+## Housekeeping
 - Rotate the Supabase `sb_secret_…` key (it was pasted in an earlier chat). Supabase → Settings →
   API Keys → Secret keys → Roll. The app doesn't use it, so rotating won't break anything.
 
 ## Tips to save tokens in the new chat
 - Start fresh (this file + repo carry the context).
-- Prefer code/syntax checks over browser screenshots for verification.
-- Batch features into fewer pushes.
+- Prefer `node --check` syntax checks over browser screenshots for verification.
+- Batch features into fewer pushes — last batch shipped guest tools + budget + vendors in one push.

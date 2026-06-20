@@ -232,9 +232,21 @@
   .gp-event-actions .btn{flex:1;min-width:130px;justify-content:center}
   .gp-empty{text-align:center;padding:40px 20px;color:var(--muted)}
   .gp-empty .big{font-size:48px;margin-bottom:10px}
-  .gp-countdown{text-align:center;padding:22px 16px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;border-radius:18px;margin-bottom:14px;box-shadow:var(--shadow)}
-  .gp-countdown .days{font-size:48px;font-weight:800;line-height:1;margin:6px 0}
-  .gp-countdown .lab{font-size:13px;opacity:.85;letter-spacing:.06em;text-transform:uppercase}
+  .gp-countdown{position:relative;text-align:center;padding:32px 20px 28px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;border-radius:22px;margin-bottom:14px;box-shadow:0 8px 28px rgba(0,0,0,.10);overflow:hidden}
+  .gp-countdown::before{content:"💕";position:absolute;font-size:140px;opacity:.07;top:-30px;right:-20px;transform:rotate(-12deg);pointer-events:none}
+  .gp-countdown .couple-name{font-size:24px;font-weight:700;letter-spacing:.01em;margin-bottom:4px;line-height:1.2}
+  .gp-countdown .wed-date{font-size:13px;opacity:.9;font-weight:500;letter-spacing:.04em;margin-bottom:18px}
+  .gp-countdown .days{font-size:64px;font-weight:800;line-height:1;margin:4px 0;font-feature-settings:"tnum"}
+  .gp-countdown .lab{font-size:12px;opacity:.85;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .gp-greet{padding:18px 22px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;display:flex;align-items:center;gap:14px}
+  .gp-greet .av{width:46px;height:46px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex:none}
+  .gp-greet .hi{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:2px}
+  .gp-greet .nm{font-size:18px;font-weight:650;color:var(--text)}
+  .gp-card h3.section-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px}
+  .gp-next{background:linear-gradient(135deg,var(--accent-soft) 0%,#fff 100%);border-left:5px solid var(--accent);padding:18px 20px;border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px}
+  .gp-next .knm{font-size:11px;font-weight:700;color:var(--accent-dark);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+  .gp-next h3{font-size:20px;margin:0 0 4px}
+  .gp-next .meta{font-size:13px;color:var(--muted);margin-bottom:10px}
   .gp-alert{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
   .gp-alert.unread{background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, var(--card)) 0%, var(--card) 60%)}
   .gp-alert h4{margin:0 0 4px;font-size:15px}
@@ -283,7 +295,7 @@
       <div class="gp-brand"><span class="gp-heart">💍</span><span id="gpCoupleName">Wedding</span></div>
       <div class="gp-actions">
         <button class="gp-icon-btn" id="gpAlertsBtn" onclick="gpShowTab('alerts')" title="Alerts">🔔<span id="gpUnread" class="gp-badge" style="display:none">0</span></button>
-        <button class="gp-icon-btn" onclick="gpSignOut()" title="Sign out">↩</button>
+        
       </div>
     </div>
     <nav class="gp-tabs" id="gpTabs"></nav>
@@ -2082,16 +2094,22 @@ function gpRenderHome(){
   const upcoming = gpUpcomingEvents();
   const next = upcoming[0];
   const recentAlerts = (G.alerts||[]).slice(0,3);
+  const guestName = G.data?.guest?.name || "";
+  const firstName = guestName.split(/\s+/)[0] || "";
+  const initial = firstName ? firstName[0].toUpperCase() : "👋";
+  const dateLabel = date ? gpFmtDate(date) : "";
   return `
+    ${firstName ? `<div class="gp-greet"><div class="av">${esc(initial)}</div>
+      <div><div class="hi">Welcome to the wedding portal</div><div class="nm">Hi ${esc(firstName)} 💕</div></div></div>` : ""}
     <div class="gp-countdown">
-      <div class="lab">${esc(G.coupleName)}</div>
+      <div class="couple-name">${esc(G.coupleName)}</div>
+      ${dateLabel?`<div class="wed-date">${esc(dateLabel)}</div>`:""}
       <div class="days">${days==null?"💕":(days>=0?days:0)}</div>
-      <div class="lab">${days==null?"See you soon":(days>0?"days to go":(days===0?"today!":"the big day was "+(-days)+" days ago"))}</div>
+      <div class="lab">${days==null?"See you soon":(days>0?"days to go":(days===0?"today is the day!":"the big day was "+(-days)+" days ago"))}</div>
     </div>
-    ${next ? `<div class="gp-card"><div class="kicker">Up next</div><h3>${esc(next.ev.name||"Event")}</h3>
-      <div class="muted" style="font-size:14px">${esc(gpEventDateTime(next.ev))}</div>
-      ${next.ev.venue?`<div style="margin-top:6px">📍 ${esc(next.ev.venue)}</div>`:""}
-      <div class="gp-event-actions"><button class="btn ghost" onclick="gpShowTab('schedule')">Full schedule →</button></div>
+    ${next ? `<div class="gp-next"><div class="knm">Up next</div><h3>${esc(next.ev.name||"Event")}</h3>
+      <div class="meta">${esc(gpEventDateTime(next.ev))}${next.ev.venue?` · 📍 ${esc(next.ev.venue)}`:""}</div>
+      <button class="btn" onclick="gpShowTab('schedule')">View full schedule →</button>
     </div>` : ""}
     ${recentAlerts.length?`<div class="gp-card"><h3>Latest updates</h3>
       ${recentAlerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}"><h4>${esc(a.title)}</h4>
@@ -2100,6 +2118,9 @@ function gpRenderHome(){
       ${G.alerts.length>3?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="gpShowTab('alerts')">See all alerts</button>`:""}
     </div>`:""}
     ${gpRenderKnowGeneralCard()}
+    <div style="text-align:center;margin:32px 0 16px">
+      <button class="link-btn" onclick="if(confirm('Sign out of the guest portal?'))gpSignOut()" style="font-size:12px;color:var(--muted)">Sign out</button>
+    </div>
   `;
 }
 
