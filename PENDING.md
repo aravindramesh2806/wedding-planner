@@ -60,9 +60,19 @@ headcount per event), per-event checklists with notes dropdown, public guest RSV
   `if(!S.vendors) S.vendors=[]` on load for existing couples whose blob predates the field.
 
 ## PENDING FEATURES TO BUILD
-*(none from the original handoff — pick the next one)*
 
-Suggestions to consider:
+### Priority order
+1. **Finish guest portal functionality** (current focus) — flows below until rock solid
+2. **Guest portal UI polish (v2)** — *do this after functionality is settled.* Areas to revisit:
+   - Stronger hero / cover treatment on the Home tab (couple photo or banner image)
+   - Polished event cards with per-event icons (💍 ceremony, 🍸 cocktail, 💃 sangeet, etc.)
+   - Smoother transitions between tabs (fade-in)
+   - Better empty states
+   - Tighter mobile spacing — most guests will be on phones
+   - Optional dark mode
+3. **Customizable guest portal** (see below — bigger feature, can absorb the polish work)
+
+### Suggestions to consider:
 - **Customizable guest portal**: let the couple style their guest-facing portal —
   upload a cover photo / hero banner, set a custom welcome message, write a
   "Our story" section (how we met, our journey), add a photo gallery, pick
