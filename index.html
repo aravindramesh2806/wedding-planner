@@ -228,7 +228,7 @@
   .gp-tabs::-webkit-scrollbar{display:none}
   .gp-tab{flex:0 0 auto;background:transparent;border:1px solid var(--gp-line);color:var(--gp-muted);padding:8px 15px;cursor:pointer;font-weight:500;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;border-radius:30px;white-space:nowrap;transition:.18s}
   .gp-tab.active{background:var(--gp-ink);color:var(--gp-card);border-color:var(--gp-ink)}
-  .gp-wrap{max-width:680px;margin:0 auto;padding:0 0 10px}
+  .gp-wrap{max-width:100%;margin:0;padding:0 0 10px}
   .gp-pad{padding:24px 20px 0}
   .gp-hero{position:relative;min-height:404px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;color:var(--gp-heroink);overflow:hidden}
   .gp-hero .bg{position:absolute;inset:0;background:linear-gradient(165deg,var(--gp-accent) 0%,var(--gp-dark) 68%,#3c262e 100%);background-size:cover;background-position:center}
@@ -315,6 +315,35 @@
   .gp-signin-tabs button.on{color:var(--gp-accent);border-bottom-color:var(--gp-accent)}
   .gp-foot{text-align:center;font-size:11px;color:var(--gp-muted);padding:22px 20px 30px;letter-spacing:.5px}
   .gp-foot .h{color:var(--gp-accent)}
+  @media(min-width:860px){
+    .gp-top-inner,.gp-tabs{max-width:1160px}
+    .gp-tabs{justify-content:center;padding-left:32px;padding-right:32px}
+    .gp-pad{max-width:1060px;margin:0 auto;padding:36px 32px 0}
+    .gp-hero{min-height:72vh}
+    .gp-kick{font-size:13px;letter-spacing:6px;margin-bottom:24px}
+    .gp-names{font-size:92px}
+    .gp-names .amp{font-size:38px;margin:10px 0}
+    .gp-when{font-size:15px;letter-spacing:3px;margin-top:26px}
+    .gp-sprig{font-size:24px;margin-top:24px}
+    .gp-count{gap:16px;margin-top:-46px}
+    .gp-cbox{width:98px;padding:18px 0;border-radius:20px}
+    .gp-cbox b{font-size:44px}
+    .gp-cbox span{font-size:11px;letter-spacing:2px}
+    .gp-note{font-size:28px;max-width:840px;margin-left:auto;margin-right:auto}
+    .gp-div::before,.gp-div::after{width:90px}
+    .gp-quick{grid-template-columns:repeat(4,1fr);gap:18px}
+    .gp-qcard{padding:26px 22px;text-align:center}
+    .gp-qcard .qi{font-size:28px}
+    .gp-qcard h4{font-size:22px}
+    .gp-qcard p{font-size:13px}
+    .gp-h{font-size:38px;text-align:center}
+    .gp-sub{text-align:center;margin-bottom:26px;font-size:14px}
+    .gp-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px;align-items:start}
+    .gp-grid>.gp-h,.gp-grid>.gp-sub{grid-column:1 / -1}
+    .gp-event-title{font-size:24px}
+    .gp-ev-ic{flex-basis:52px;height:52px;font-size:24px}
+    .gp-foot{padding-top:44px}
+  }
   @media(max-width:520px){.gp-event-actions .btn,.gp-btn{min-width:0;flex:1 1 100%}}
 </style>
 </head>
@@ -2775,7 +2804,7 @@ function gpRenderHome(){
 function gpRenderSchedule(){
   const list=gpUpcomingEvents();
   if(!list.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">📅</div>No events yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">The celebrations</div><div class="gp-sub">Everything, in order</div>`+
+  return `<div class="gp-pad gp-grid"><div class="gp-h">The celebrations</div><div class="gp-sub">Everything, in order</div>`+
    list.map(({ev})=>{
     const hidden=isVenueHiddenForGuests(ev);
     return `<div class="gp-event">
@@ -2803,7 +2832,7 @@ function gpRenderVenues(){
     if(!venues[key].parking&&ev.parking_notes) venues[key].parking=ev.parking_notes; });
   const list=Object.values(venues);
   if(!list.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">📍</div>No venues yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">Venues</div><div class="gp-sub">Where the magic happens</div>`+
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Venues</div><div class="gp-sub">Where the magic happens</div>`+
     list.map(v=>`<div class="gp-card"><h3>${esc(v.name)}</h3>
       <div class="gp-sub" style="margin:0 0 8px">${v.events.map(esc).join(" · ")}</div>
       ${v.parking?`<div style="font-size:13.5px;white-space:pre-wrap"><b>Parking:</b> ${esc(v.parking)}</div>`:""}
@@ -2817,7 +2846,7 @@ function gpRenderTravel(){
   const t=(G.portal&&G.portal.travel)||{}; const hotels=t.hotels||[];
   const hasGetting=(t.airport||"").trim()||(t.shuttle||"").trim()||(t.contact||"").trim();
   if(!hotels.length&&!hasGetting) return `<div class="gp-pad"><div class="gp-empty"><div class="big">✈</div>Travel details coming soon.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">Travel &amp; stay</div><div class="gp-sub">Getting here and where to rest</div>
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Travel &amp; stay</div><div class="gp-sub">Getting here and where to rest</div>
     ${hotels.map(h=>`<div class="gp-hotel">${(h.photo||"").trim()?`<div class="ph" style="background-image:url('${esc(h.photo)}')"></div>`:`<div class="ph"></div>`}
       <div class="in"><h4>${esc(h.name||"Hotel")}${h.tag?`<span class="gp-tag">${esc(h.tag)}</span>`:""}</h4>
         ${h.rate?`<div class="gp-row"><span class="k">Rate</span><span><b>${esc(h.rate)}</b></span></div>`:""}
@@ -2839,7 +2868,7 @@ function gpRenderTravel(){
 function gpRenderFaq(){
   const faq=(G.portal&&G.portal.faq)||[];
   if(!faq.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">❔</div>No questions yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">Good to know</div><div class="gp-sub">Answers to common questions</div>
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Good to know</div><div class="gp-sub">Answers to common questions</div>
     ${faq.map(x=>`<div class="gp-faq"><div class="q">${esc(x.q||"")}<i>⌄</i></div><div class="a">${esc(x.a||"")}</div></div>`).join("")}</div>`;
 }
 
@@ -2861,14 +2890,14 @@ function gpRenderKnow(){
   const general=G.data?.plan_data?.know_before_general||"";
   const perEvent=G.events.filter(e=>e.know_before_notes);
   if(!general&&!perEvent.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">ℹ️</div>Nothing here yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">Know before you go</div><div class="gp-sub">A few helpful notes</div>
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Know before you go</div><div class="gp-sub">A few helpful notes</div>
     ${general?`<div class="gp-card"><h3>General</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`:""}
     ${perEvent.map(ev=>`<div class="gp-card"><h3>${esc(ev.name||"Event")}</h3><div style="white-space:pre-wrap;font-size:14px">${esc(ev.know_before_notes)}</div></div>`).join("")}</div>`;
 }
 
 function gpRenderRsvp(){
   if(!G.events.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">✉️</div>No events to RSVP for yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">My RSVP</div><div class="gp-sub">Let them know for each celebration</div>`+
+  return `<div class="gp-pad gp-grid"><div class="gp-h">My RSVP</div><div class="gp-sub">Let them know for each celebration</div>`+
    G.events.map(ev=>{
     const r = G.rsvpsByEvent[ev.id] || {};
     const yes = r.attending === true, no = r.attending === false;
@@ -2887,7 +2916,7 @@ function gpRenderRsvp(){
 
 function gpRenderAlerts(){
   if(!G.alerts.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">🔔</div>No announcements yet.</div></div>`;
-  return `<div class="gp-pad"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>`+
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>`+
    G.alerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}">
     <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div>
     <h4>${esc(a.title)}</h4>
