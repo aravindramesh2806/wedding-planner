@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-06-22T20:10:00-07:00",
+  "scanType": "code+live",
+  "scanner": "nightly-scan v1 (manual run)",
+  "overall": "operational",
+  "summary": "All systems operational. Live app and Supabase backend are up. No secrets or data leaks. 2 low-severity code-quality advisories to review when convenient.",
+  "nextScanCron": "0 1 * * *",
+  "liveSite": {
+    "lastFullCheck": "2026-06-22T20:10:00-07:00",
+    "cadence": "weekly (Mondays)",
+    "app": "up",
+    "appNote": "https://aravindramesh2806.github.io/wedding-planner/ served full app HTML.",
+    "supabase": "up",
+    "supabaseNote": "auth/v1/health responded without error.",
+    "note": "The banner runs a live uptime ping on every page load. This deeper check (app HTML + Supabase health) ran now and is recorded weekly on Mondays."
+  },
+  "stats": {
+    "fileScanned": "index.html",
+    "lines": 3096,
+    "inlineScripts": 1,
+    "jsSyntax": "pass"
+  },
+  "categories": {
+    "security": {
+      "status": "pass",
+      "headline": "Clean — no exposed secrets",
+      "findings": [
+        { "severity": "ok", "title": "No service-role or secret keys in client code", "detail": "Scanned for secret keys, service_role, private keys, and AWS/Stripe/GitHub tokens. None present.", "location": "index.html" },
+        { "severity": "ok", "title": "Only the browser-safe publishable key is shipped", "detail": "The publishable key is designed to be public; access is gated by Supabase RLS + SECURITY DEFINER RPCs.", "location": "index.html:2093" },
+        { "severity": "ok", "title": "No eval / new Function / document.write", "detail": "No dynamic code-execution sinks found.", "location": "index.html" }
+      ]
+    },
+    "dataLeaks": {
+      "status": "pass",
+      "headline": "No data leaks detected",
+      "findings": [
+        { "severity": "ok", "title": "No debug logging of user data", "detail": "3 console.warn calls found, all error-handling only — no PII printed.", "location": "index.html:1372,1841,2127" },
+        { "severity": "info", "title": "Guest/plan data stored in browser localStorage (by design)", "detail": "8 localStorage uses power local-only mode. Expected; data stays on the user's device.", "location": "index.html" }
+      ]
+    },
+    "bugs": {
+      "status": "warn",
+      "headline": "2 low-severity advisories",
+      "findings": [
+        { "severity": "low", "title": "23 empty / swallowed catch blocks", "detail": "Errors are caught and silently ignored. Fine for non-critical paths, but can hide real failures (e.g. failed cloud saves). Consider logging or surfacing the important ones.", "location": "index.html" },
+        { "severity": "low", "title": "63 innerHTML assignments — keep user text escaped", "detail": "innerHTML is an XSS surface. Confirm guest names, RSVP notes, and any user-entered text are escaped before insertion. SVG/template literals with static content are safe.", "location": "index.html" },
+        { "severity": "ok", "title": "JavaScript syntax valid", "detail": "node --check passed on all inline scripts.", "location": "index.html" }
+      ]
+    },
+    "features": {
+      "status": "pass",
+      "headline": "All core features present",
+      "findings": [
+        { "severity": "ok", "title": "Cloud sync RPCs present", "detail": "wp_signup, wp_load, wp_save, wp_admin_list all referenced.", "location": "index.html" },
+        { "severity": "ok", "title": "Planner modules present & rendering live", "detail": "checklist, budget, guest list, RSVP, countdown, themes, vendors, and guest portal all detected in code and confirmed rendering on the live site.", "location": "index.html + live" }
+      ]
+    }
+  }
+}

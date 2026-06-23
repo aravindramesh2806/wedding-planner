@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Wedding Planner — Status</title>
+<style>
+  :root{
+    --bg:#faf7f5; --card:#ffffff; --ink:#2b2330; --muted:#857a8c;
+    --line:#ece4ee; --rose:#c98aa6; --rose-deep:#a85f81;
+    --ok:#2f9e6f; --ok-bg:#e7f6ee; --warn:#c9821f; --warn-bg:#fdf2e0;
+    --crit:#cc4b4b; --crit-bg:#fbe9e9; --info:#5b78b8; --info-bg:#eaf0fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+  header{text-align:center;margin-bottom:24px}
+  header h1{margin:0;font-size:22px;font-weight:650;letter-spacing:.2px}
+  header .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .banner{border-radius:16px;padding:22px 24px;display:flex;align-items:center;gap:16px;
+    border:1px solid var(--line);background:var(--card);margin-bottom:22px;
+    box-shadow:0 1px 3px rgba(80,40,70,.04)}
+  .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 4px rgba(0,0,0,.04)}
+  .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)}
+  .dot.crit{background:var(--crit)} .dot.idle{background:#b9b0c0}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .banner .b-title{font-size:18px;font-weight:650}
+  .banner .b-sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    box-shadow:0 1px 3px rgba(80,40,70,.04)}
+  .card h3{margin:0 0 2px;font-size:13px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.6px;color:var(--muted)}
+  .card .big{font-size:16px;font-weight:600;margin-top:4px}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;
+    text-transform:uppercase;letter-spacing:.4px;vertical-align:middle}
+  .pill.ok{background:var(--ok-bg);color:var(--ok)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn)}
+  .pill.crit{background:var(--crit-bg);color:var(--crit)}
+  .pill.info{background:var(--info-bg);color:var(--info)}
+  .pill.idle{background:#efeaf2;color:var(--muted)}
+  section.detail{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:6px 18px;margin-bottom:18px;box-shadow:0 1px 3px rgba(80,40,70,.04)}
+  .cat{border-bottom:1px solid var(--line);padding:14px 0}
+  .cat:last-child{border-bottom:none}
+  .cat-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+  .cat-head .name{font-weight:600;font-size:15px;flex:1}
+  .cat-head .chev{color:var(--muted);transition:transform .15s}
+  .cat.open .chev{transform:rotate(90deg)}
+  .finds{margin:10px 0 4px;display:none}
+  .cat.open .finds{display:block}
+  .find{display:flex;gap:10px;padding:8px 0;border-top:1px dashed var(--line)}
+  .find:first-child{border-top:none}
+  .sev{font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;height:fit-content;
+    text-transform:uppercase;letter-spacing:.3px;flex:0 0 auto;margin-top:2px}
+  .sev.ok{background:var(--ok-bg);color:var(--ok)}
+  .sev.info{background:var(--info-bg);color:var(--info)}
+  .sev.low{background:var(--warn-bg);color:var(--warn)}
+  .sev.medium{background:var(--warn-bg);color:var(--warn)}
+  .sev.high,.sev.critical{background:var(--crit-bg);color:var(--crit)}
+  .find .f-title{font-weight:550}
+  .find .f-detail{color:var(--muted);font-size:13px;margin-top:1px}
+  .find .f-loc{color:var(--rose-deep);font-size:12px;font-family:ui-monospace,Menlo,monospace;margin-top:3px}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px;line-height:1.7}
+  a{color:var(--rose-deep)}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;color:var(--muted);
+    font-size:12.5px;margin-top:14px}
+  .reload{display:inline-block;margin-top:2px;background:none;border:1px solid var(--line);
+    color:var(--muted);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer}
+  .reload:hover{border-color:var(--rose);color:var(--rose-deep)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>💍 Wedding Planner — System Status</h1>
+    <div class="sub">Live health of the app, plus the latest automated nightly scan.</div>
+  </header>
+
+  <div class="banner">
+    <div id="bannerDot" class="dot idle pulse"></div>
+    <div>
+      <div class="b-title" id="bannerTitle">Checking live status…</div>
+      <div class="b-sub" id="bannerSub">Pinging the app and backend</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>App (GitHub Pages)</h3>
+      <div class="big"><span id="appPill" class="pill idle">checking</span> <span id="appMs" style="color:var(--muted);font-size:13px"></span></div>
+    </div>
+    <div class="card">
+      <h3>Backend (Supabase)</h3>
+      <div class="big"><span id="dbPill" class="pill idle">checking</span> <span id="dbMs" style="color:var(--muted);font-size:13px"></span></div>
+    </div>
+    <div class="card">
+      <h3>Last nightly scan</h3>
+      <div class="big" id="scanWhen">—</div>
+    </div>
+    <div class="card">
+      <h3>Scan result</h3>
+      <div class="big"><span id="scanPill" class="pill idle">—</span></div>
+    </div>
+  </div>
+
+  <section class="detail" id="catSection">
+    <div style="padding:14px 0;color:var(--muted)">Loading scan report…</div>
+  </section>
+
+  <div class="meta" id="meta"></div>
+  <div style="text-align:center"><button class="reload" onclick="location.reload()">↻ Re-run live checks</button></div>
+
+  <footer>
+    Status page for <a href="../" >Wedding Planner</a>.
+    Live checks run in your browser on every load; the code scan runs automatically at 1:00 AM daily.<br>
+    <span id="genStamp"></span>
+  </footer>
+</div>
+
+<script>
+const APP_URL = "https://aravindramesh2806.github.io/wedding-planner/";
+const SUPABASE_URL = "https://vjncnjalnxdkyzbdrxck.supabase.co";
+
+function setPill(el, cls, txt){ el.className = "pill "+cls; el.textContent = txt; }
+
+// ---- Live heartbeat (runs every load) ----
+async function ping(url, opts){
+  const t0 = performance.now();
+  try{
+    await fetch(url, Object.assign({cache:"no-store"}, opts||{}));
+    return {ok:true, ms:Math.round(performance.now()-t0)};
+  }catch(e){
+    // no-cors fetches resolve opaque; a thrown error means truly unreachable
+    return {ok:false, ms:Math.round(performance.now()-t0)};
+  }
+}
+
+async function liveChecks(){
+  const app = document.getElementById('appPill'), appMs = document.getElementById('appMs');
+  const db = document.getElementById('dbPill'), dbMs = document.getElementById('dbMs');
+
+  const a = await ping(APP_URL, {mode:"no-cors"});
+  setPill(app, a.ok?"ok":"crit", a.ok?"operational":"unreachable");
+  appMs.textContent = a.ms+" ms";
+
+  const d = await ping(SUPABASE_URL+"/auth/v1/health");
+  setPill(db, d.ok?"ok":"crit", d.ok?"operational":"unreachable");
+  dbMs.textContent = d.ms+" ms";
+
+  const dot = document.getElementById('bannerDot');
+  const title = document.getElementById('bannerTitle');
+  const sub = document.getElementById('bannerSub');
+  dot.classList.remove('pulse');
+  if(a.ok && d.ok){
+    dot.className="dot ok"; title.textContent="All systems operational";
+    sub.textContent="App and backend are responding normally.";
+  } else if(a.ok || d.ok){
+    dot.className="dot warn"; title.textContent="Partial outage";
+    sub.textContent=(a.ok?"Backend":"App")+" is not responding.";
+  } else {
+    dot.className="dot crit"; title.textContent="Service unreachable";
+    sub.textContent="Neither the app nor the backend responded.";
+  }
+}
+
+// ---- Nightly scan report ----
+const SEV_ORDER = {critical:0,high:1,medium:2,low:3,warn:3,info:4,ok:5};
+const STATUS_PILL = {pass:["ok","healthy"],warn:["warn","advisories"],fail:["crit","action needed"]};
+
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+}
+
+async function loadScan(){
+  const sec = document.getElementById('catSection');
+  let data;
+  try{
+    const r = await fetch("latest.json?ts="+Date.now(), {cache:"no-store"});
+    if(!r.ok) throw 0;
+    data = await r.json();
+  }catch(e){
+    sec.innerHTML = '<div style="padding:14px 0;color:var(--muted)">No scan report found yet. The first nightly scan runs at 1:00 AM and will populate this section.</div>';
+    return;
+  }
+
+  // top cards
+  document.getElementById('scanWhen').textContent = fmtDate(data.generatedAt);
+  const sp = document.getElementById('scanPill');
+  const ov = (data.overall||"").toLowerCase();
+  if(ov==="operational"){ setPill(sp,"ok","healthy"); }
+  else if(ov==="degraded"){ setPill(sp,"warn","advisories"); }
+  else { setPill(sp,"crit","action needed"); }
+
+  // categories
+  const labels = {security:"Security & secrets", dataLeaks:"Data leaks", bugs:"Bugs & code quality", features:"Feature check"};
+  const cats = data.categories||{};
+  let html = "";
+  for(const key of ["security","dataLeaks","bugs","features"]){
+    const c = cats[key]; if(!c) continue;
+    const finds = (c.findings||[]).slice().sort((a,b)=>(SEV_ORDER[a.severity]??9)-(SEV_ORDER[b.severity]??9));
+    const stat = (c.status||"pass");
+    const [pc,ptxt] = STATUS_PILL[stat]||["idle",stat];
+    const open = stat!=="pass" ? "open":"";
+    html += `<div class="cat ${open}">
+      <div class="cat-head" onclick="this.parentNode.classList.toggle('open')">
+        <span class="chev">▶</span>
+        <span class="name">${labels[key]||key}</span>
+        <span class="pill ${pc}">${ptxt}</span>
+      </div>
+      <div class="finds">${finds.map(f=>`
+        <div class="find">
+          <span class="sev ${f.severity}">${f.severity}</span>
+          <div>
+            <div class="f-title">${f.title}</div>
+            <div class="f-detail">${f.detail||""}</div>
+            ${f.location?`<div class="f-loc">${f.location}</div>`:""}
+          </div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  }
+  sec.innerHTML = `<div style="padding:12px 0 4px;color:var(--ink)">${data.summary||""}</div>` + html;
+
+  // meta
+  const live = data.liveSite||{};
+  document.getElementById('meta').innerHTML =
+    `<span>Scan type: <b>${data.scanType||"code"}</b></span>`+
+    `<span>File: <b>${(data.stats&&data.stats.fileScanned)||"index.html"}</b> · ${(data.stats&&data.stats.lines)||"?"} lines</span>`+
+    `<span>JS syntax: <b>${(data.stats&&data.stats.jsSyntax)||"?"}</b></span>`+
+    `<span>Live-site deep check: <b>${live.cadence||"weekly"}</b></span>`;
+  document.getElementById('genStamp').textContent = "Report generated "+fmtDate(data.generatedAt)+".";
+}
+
+liveChecks();
+loadScan();
+</script>
+</body>
+</html>

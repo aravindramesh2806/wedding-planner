@@ -59,6 +59,47 @@ headcount per event), per-event checklists with notes dropdown, public guest RSV
   paid total). `S.vendors` is wired into `cloudPayload()` and `adoptCouple()`, with a safety
   `if(!S.vendors) S.vendors=[]` on load for existing couples whose blob predates the field.
 
+### Shipped 2026-06-22 — Guest portal v1 (LIVE)
+- Guest portal deployed and smoke-tested live. Sign-in screen resolves couple name via
+  `wp_guest_couple_brief`; SQL migration (`supabase-guest-portal.sql`, incl. 6 added RPCs) run in Supabase.
+- Routes working: `#guestlogin-<slug>` (per-couple), `#g=<token>`, `#i=<invite>`, `#preview=`.
+- Fixed: removed hardcoded `VANITY_GUEST_ENTRY` (was pinning bare `#guestlogin` to one test couple).
+  Bare `#guestlogin` now shows the "valid invite link needed" screen. Multi-tenant correct.
+- Returning guests auto-resume via per-couple token in localStorage (note: incognito keeps this
+  across navigations until ALL incognito windows close — looks like "logged in without signing in").
+- SECURITY FIX (2026-06-22): `wp_guest_load` previously returned the couple's FULL `data` blob
+  (budget, vendors, tasks, full guest list, settings) to ANY token holder regardless of status.
+  Rewrote it to (a) gate plan/rsvps/alerts behind status='approved', and (b) return only the
+  guest-facing slices: `events` + `know_before_general`. Re-run `supabase-guest-portal.sql` in
+  Supabase to apply (safe to re-run; uses create-or-replace). No index.html change needed.
+- STILL TO VERIFY: alerts round-trip; the 6 guest pages on mobile.
+- SMALLER FOLLOW-UP: `hide_venue` is enforced only client-side — the venue string is still sent
+  for hidden events. Consider blanking hidden-venue fields server-side in wp_guest_load too.
+
+### Shipped 2026-06-22 — Guest portal redesign + customization (NOT yet deployed)
+Big visual + feature upgrade to the guest portal. All in index.html + 1 SQL change.
+- **Premium redesign**: serif display fonts (Google Fonts), cinematic hero, LIVE ticking countdown,
+  elegant event timeline with per-event emoji icons, dress-code pills, refined cards/alerts/RSVP.
+  Mobile-first. New CSS is driven by --gp-* vars so it is theme-independent of the planner's 8 themes.
+- **6 couple-selectable portal designs** (GP_DESIGNS): Blush & Gold, Sage & Linen, Midnight & Champagne,
+  Terracotta & Sand, Maroon & Marigold, Classic Noir. Each = palette + font pairing.
+- **Full customization** (couple, in Guest portal tab): pick design, optional custom accent color,
+  heading font override, cover photo URL, welcome message.
+- **Section show/hide toggles**: couple controls which tabs guests see — Schedule, Venues, Travel,
+  FAQ, Our Story, Photos. Guest tabs render only enabled sections that also have content.
+- **New guest sections + couple editors**: Travel & Stay (airport/shuttle/contact + hotels list),
+  FAQ (Q/A pairs), Our Story (text + photo). Photos tab is a "coming soon" teaser.
+- **Data**: new S.portal object; wired into blank, cloudPayload(), adoptCouple(), ensurePortal()/blankPortal().
+- **SQL**: wp_guest_load now also returns `portal` (gated behind status=approved, like events). Re-run
+  supabase-guest-portal.sql. wp_admin_preview_portal already returns full blob, so couple Preview works.
+
+DEPLOY STEPS (not done yet):
+  1. cp index.html into repo, commit, push (GitHub Pages).
+  2. Re-run supabase-guest-portal.sql in Supabase (safe; create-or-replace).
+  3. Couple side: open planner -> Guest portal tab -> pick design, toggle sections, fill Travel/FAQ/Story.
+  4. Verify live via guest portal + couple "Preview portal" button.
+Backup of pre-redesign index.html saved in outputs as index.backup-*.html.
+
 ## PENDING FEATURES TO BUILD
 
 ### Priority order
@@ -88,6 +129,13 @@ headcount per event), per-event checklists with notes dropdown, public guest RSV
 - **Plus-one tracking**: explicit plus-one flag per guest, with name slot.
 - **Notifications**: simple "what's due in the next N days" digest on the dashboard, pulling
   from budget dueDates + event dates.
+- **Shared photo album** *(Phase 2/3)*: guests upload photos from the guest portal into
+  a couple-specific shared album; couple can also post wedding pics to the same album. All
+  approved guests can browse. Couple moderates (approve/delete). Storage: Supabase Storage
+  buckets (no new dependency). Open questions: free-tier storage cap, moderation flow
+  (auto-publish vs couple-approve), public shareable link vs approved-guests-only.
+  Strategic value: strong referral mechanic — guests who see it want it for their own wedding.
+
 
 ## Housekeeping
 - Rotate the Supabase `sb_secret_…` key (it was pasted in an earlier chat). Supabase → Settings →

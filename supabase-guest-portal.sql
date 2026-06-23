@@ -239,6 +239,7 @@ declare
   w          public.weddings%rowtype;
   rsvps      json;
   alerts     json;
+  plan_clean json;
 begin
   select * into g from public.guests where guest_token = p_guest_token;
   if g.id is null then return json_build_object('error','not_found'); end if;
@@ -247,19 +248,34 @@ begin
 
   select * into w from public.weddings where id = g.wedding_id;
 
-  select coalesce(json_agg(r), '[]'::json) into rsvps from (
-    select event_id, attending, plus_ones, updated_at
-      from public.guest_rsvps where guest_id = g.id
-  ) r;
+  -- SECURITY: only approved guests receive any plan content, and even then only
+  -- the guest-facing slices (schedule + "know before you go"). Budget, vendors,
+  -- tasks, the full guest list and couple settings never leave the server.
+  if g.status = 'approved' then
+    plan_clean := json_build_object(
+      'events', coalesce(w.data->'events', '[]'::jsonb),
+      'know_before_general', coalesce(w.data->>'know_before_general', ''),
+      'portal', coalesce(w.data->'portal', '{}'::jsonb)
+    );
 
-  select coalesce(json_agg(a order by a.created_at desc), '[]'::json) into alerts from (
-    select al.id, al.title, al.body, al.kind, al.created_at,
-           (ar.read_at is not null) as read
-      from public.guest_alerts al
-      left join public.alert_reads ar on ar.alert_id = al.id and ar.guest_id = g.id
-     where al.wedding_id = g.wedding_id
-       and public.wp_alert_matches_guest(al.audience, g.id)
-  ) a;
+    select coalesce(json_agg(r), '[]'::json) into rsvps from (
+      select event_id, attending, plus_ones, updated_at
+        from public.guest_rsvps where guest_id = g.id
+    ) r;
+
+    select coalesce(json_agg(a order by a.created_at desc), '[]'::json) into alerts from (
+      select al.id, al.title, al.body, al.kind, al.created_at,
+             (ar.read_at is not null) as read
+        from public.guest_alerts al
+        left join public.alert_reads ar on ar.alert_id = al.id and ar.guest_id = g.id
+       where al.wedding_id = g.wedding_id
+         and public.wp_alert_matches_guest(al.audience, g.id)
+    ) a;
+  else
+    plan_clean := json_build_object('events', '[]'::json, 'know_before_general', '', 'portal', '{}'::json);
+    rsvps  := '[]'::json;
+    alerts := '[]'::json;
+  end if;
 
   return json_build_object(
     'guest', json_build_object(
@@ -270,7 +286,7 @@ begin
        'bride_name', w.bride_name, 'groom_name', w.groom_name,
        'wedding_date', w.wedding_date
     ),
-    'plan_data', w.data,
+    'plan_data', plan_clean,
     'rsvps', rsvps,
     'alerts', alerts
   );
@@ -537,3 +553,163 @@ grant execute on function public.wp_admin_list_alerts(text)                     
 --    write into weddings.data (handled in the app, no SQL).
 -- 3. Pre-added guests get signin_method='pre_added' and status='pending'. They
 --    auto-promote to 'approved' when they actually sign in and match.
+
+-- ============================================================
+--  Missing RPCs (called by JS, not in original migration)
+-- ============================================================
+
+-- Add slug column to weddings for vanity URLs (#guestlogin-<slug>)
+alter table public.weddings
+  add column if not exists slug text unique;
+create index if not exists weddings_slug_idx on public.weddings(slug);
+
+-- Get or generate a couple's vanity slug.
+-- Auto-generates one from bride+groom names if not set yet.
+create or replace function public.wp_get_couple_slug(p_couple_token text)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare w public.weddings%rowtype; s text;
+begin
+  select * into w from public.weddings where token = p_couple_token;
+  if w.id is null then return json_build_object('error','not_found'); end if;
+  if w.slug is null then
+    -- Auto-derive: lowercase first names joined by hyphen, de-duped if taken
+    s := lower(regexp_replace(coalesce(w.bride_name,'') || '-' || coalesce(w.groom_name,''), '[^a-z0-9]+', '-', 'g'));
+    s := trim(both '-' from s);
+    if s = '' or s = '-' then s := encode(extensions.gen_random_bytes(6), 'hex'); end if;
+    -- Make unique by appending 4-char suffix if collision
+    if exists (select 1 from public.weddings where slug = s and id <> w.id) then
+      s := s || '-' || left(encode(extensions.gen_random_bytes(4), 'hex'), 4);
+    end if;
+    update public.weddings set slug = s where id = w.id;
+    w.slug := s;
+  end if;
+  return json_build_object('slug', w.slug);
+end; $$;
+
+-- Look up a couple by vanity slug — used for #guestlogin-<slug> links.
+-- Returns enough info to show the sign-in screen header.
+create or replace function public.wp_lookup_by_slug(p_slug text)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare w public.weddings%rowtype;
+begin
+  select * into w from public.weddings where lower(slug) = lower(p_slug);
+  if w.id is null then return json_build_object('error','not_found'); end if;
+  return json_build_object(
+    'guest_entry_token', w.guest_entry_token,
+    'bride_name', w.bride_name,
+    'groom_name', w.groom_name,
+    'wedding_date', w.wedding_date
+  );
+end; $$;
+
+-- Lightweight couple info for the guest sign-in screen header (no auth required).
+create or replace function public.wp_guest_couple_brief(p_guest_entry_token text)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare w public.weddings%rowtype;
+begin
+  select * into w from public.weddings where guest_entry_token = p_guest_entry_token;
+  if w.id is null then return json_build_object('error','not_found'); end if;
+  return json_build_object(
+    'bride_name', w.bride_name,
+    'groom_name', w.groom_name,
+    'wedding_date', w.wedding_date
+  );
+end; $$;
+
+-- Sign in an EXISTING guest — fail with "not_found" if no match.
+-- Unlike wp_guest_signup which creates a new pending entry, this only
+-- matches pre-existing guests (pre_added or already signed up).
+create or replace function public.wp_guest_signin_strict(
+  p_guest_entry_token text,
+  p_name              text,
+  p_email             text,
+  p_phone             text
+) returns json
+language plpgsql security definer set search_path = public as $$
+declare
+  w_id    uuid;
+  g       public.guests%rowtype;
+  ph4     text;
+begin
+  select id into w_id from public.weddings where guest_entry_token = p_guest_entry_token;
+  if w_id is null then return json_build_object('error','couple_not_found'); end if;
+
+  if p_phone is not null and length(p_phone) >= 4 then
+    ph4 := right(regexp_replace(p_phone, '\D', '', 'g'), 4);
+  end if;
+
+  -- Try email match first, then name+phone4
+  if p_email is not null then
+    select * into g from public.guests
+     where wedding_id = w_id and lower(email) = lower(p_email)
+     limit 1;
+  end if;
+  if g.id is null and ph4 is not null and p_name is not null then
+    select * into g from public.guests
+     where wedding_id = w_id and phone_last4 = ph4 and lower(name) = lower(p_name)
+     limit 1;
+  end if;
+  -- Also match by name alone if no phone/email provided
+  if g.id is null and p_name is not null then
+    select * into g from public.guests
+     where wedding_id = w_id and lower(name) = lower(p_name)
+     limit 1;
+  end if;
+
+  if g.id is null then return json_build_object('error','not_found'); end if;
+  if g.status = 'rejected' then return json_build_object('error','not_found'); end if;
+
+  update public.guests set last_seen_at = now() where id = g.id;
+  return json_build_object('guest_token', g.guest_token, 'status', g.status, 'guest_id', g.id);
+end; $$;
+
+-- Redeem a personal invite token (#i=<guest_token> links sent by couple).
+-- Just validates the token and returns status — the guest_token IS the credential.
+create or replace function public.wp_guest_redeem_invite(p_guest_token text)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare g public.guests%rowtype;
+begin
+  select * into g from public.guests where guest_token = p_guest_token;
+  if g.id is null then return json_build_object('error','not_found'); end if;
+  -- Auto-approve pre_added guests on first use of their personal link
+  if g.status = 'pending' and g.signin_method = 'pre_added' then
+    update public.guests
+       set status = 'approved', approved_at = now(), approved_by = 'invite_link'
+     where id = g.id;
+    g.status := 'approved';
+  end if;
+  update public.guests set last_seen_at = now() where id = g.id;
+  return json_build_object('guest_token', g.guest_token, 'guest_id', g.id, 'status', g.status);
+end; $$;
+
+-- Preview the guest portal as the couple — no auth flow, uses couple token.
+-- Returns same shape as wp_guest_load so the portal UI can reuse the same renderer.
+create or replace function public.wp_admin_preview_portal(p_couple_token text)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare w public.weddings%rowtype;
+begin
+  select * into w from public.weddings where token = p_couple_token;
+  if w.id is null then return json_build_object('error','not_found'); end if;
+  return json_build_object(
+    'guest', json_build_object('id', null, 'name', 'Preview', 'status', 'approved'),
+    'couple', json_build_object(
+      'bride_name', w.bride_name, 'groom_name', w.groom_name, 'wedding_date', w.wedding_date
+    ),
+    'plan_data', w.data,
+    'rsvps',  '[]'::json,
+    'alerts', '[]'::json
+  );
+end; $$;
+
+-- Additional grants
+grant execute on function public.wp_get_couple_slug(text)            to anon;
+grant execute on function public.wp_lookup_by_slug(text)             to anon;
+grant execute on function public.wp_guest_couple_brief(text)         to anon;
+grant execute on function public.wp_guest_signin_strict(text,text,text,text) to anon;
+grant execute on function public.wp_guest_redeem_invite(text)        to anon;
+grant execute on function public.wp_admin_preview_portal(text)       to anon;

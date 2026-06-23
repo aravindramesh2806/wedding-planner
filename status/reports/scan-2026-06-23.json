@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-06-23T10:55:50-07:00",
+  "scanType": "code",
+  "scanner": "nightly-scan v1",
+  "overall": "operational",
+  "summary": "All systems operational. No secrets or data leaks; JS syntax valid; all core features present. 2 low-severity code-quality advisories (swallowed catches, innerHTML usage) to review when convenient.",
+  "nextScanCron": "0 1 * * *",
+  "liveSite": {
+    "lastFullCheck": "2026-06-22T20:10:00-07:00",
+    "cadence": "weekly (Mondays)",
+    "app": "up",
+    "appNote": "https://aravindramesh2806.github.io/wedding-planner/ served full app HTML (last weekly check, Mon 2026-06-22).",
+    "supabase": "up",
+    "supabaseNote": "auth/v1/health responded without error (last weekly check, Mon 2026-06-22).",
+    "note": "Code-only scan today (Tue). Live app + Supabase deep check runs weekly on Mondays; values carried over from the 2026-06-22 check."
+  },
+  "stats": {
+    "fileScanned": "index.html",
+    "lines": 3096,
+    "inlineScripts": 2,
+    "jsSyntax": "pass"
+  },
+  "categories": {
+    "security": {
+      "status": "pass",
+      "headline": "Clean \u2014 no exposed secrets",
+      "findings": [
+        {
+          "severity": "ok",
+          "title": "No service-role or secret keys in client code",
+          "detail": "Scanned for sb_secret_, service_role, SUPABASE_SERVICE, private keys, sk_live_, ghp_, and AWS AKIA keys. None present.",
+          "location": "index.html"
+        },
+        {
+          "severity": "ok",
+          "title": "Only the browser-safe publishable key is shipped",
+          "detail": "1 sb_publishable_ key found \u2014 public by design; access gated by Supabase RLS + SECURITY DEFINER RPCs.",
+          "location": "index.html"
+        },
+        {
+          "severity": "ok",
+          "title": "No eval / new Function / document.write",
+          "detail": "No dynamic code-execution sinks found.",
+          "location": "index.html"
+        }
+      ]
+    },
+    "dataLeaks": {
+      "status": "pass",
+      "headline": "No data leaks detected",
+      "findings": [
+        {
+          "severity": "ok",
+          "title": "No debug logging of user data",
+          "detail": "0 console.log/debug/info, 3 console.warn (error-handling only, no PII printed), 0 console.error.",
+          "location": "index.html"
+        },
+        {
+          "severity": "info",
+          "title": "Guest/plan data stored in browser localStorage (by design)",
+          "detail": "8 localStorage uses power local-only mode. Expected; data stays on the user's device.",
+          "location": "index.html"
+        }
+      ]
+    },
+    "bugs": {
+      "status": "warn",
+      "headline": "2 low-severity advisories",
+      "findings": [
+        {
+          "severity": "low",
+          "title": "25 empty / swallowed catch blocks",
+          "detail": "Errors caught and silently ignored (up from 23 last scan). Fine for non-critical paths but can hide real failures e.g. failed cloud saves. Consider logging or surfacing the important ones.",
+          "location": "index.html"
+        },
+        {
+          "severity": "low",
+          "title": "63 innerHTML assignments \u2014 keep user text escaped",
+          "detail": "innerHTML is an XSS surface. Confirm guest names, RSVP notes, and any user-entered text are escaped before insertion. Static template literals/SVG are safe.",
+          "location": "index.html"
+        },
+        {
+          "severity": "ok",
+          "title": "JavaScript syntax valid",
+          "detail": "node --check passed on both inline scripts (149KB + 141B).",
+          "location": "index.html"
+        },
+        {
+          "severity": "ok",
+          "title": "No TODO/FIXME/HACK markers",
+          "detail": "0 found.",
+          "location": "index.html"
+        }
+      ]
+    },
+    "features": {
+      "status": "pass",
+      "headline": "All core features present",
+      "findings": [
+        {
+          "severity": "ok",
+          "title": "Cloud sync RPCs present",
+          "detail": "wp_signup, wp_load, wp_save, wp_admin_list all referenced.",
+          "location": "index.html"
+        },
+        {
+          "severity": "ok",
+          "title": "Planner modules present",
+          "detail": "checklist, budget, guest, rsvp, countdown, theme all detected in code.",
+          "location": "index.html"
+        }
+      ]
+    }
+  }
+}
