@@ -10,6 +10,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Wedding">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:wght@500;600;700&family=Marcellus&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --accent:#b76e79;        /* default: dusty rose */
@@ -200,7 +203,12 @@
     body.print-guests table{font-size:12px}
   }
   /* ------- Guest Portal ------- */
-  #guestPortal{min-height:100vh;background:var(--bg);position:fixed;inset:0;overflow:auto;z-index:90}
+  #guestPortal, #cloudauth{
+    --gp-accent:#C98B86; --gp-dark:#8f4f59; --gp-gold:#C39A5B; --gp-bg:#FBF7F3; --gp-card:#FFFFFF;
+    --gp-line:#EADCD4; --gp-ink:#46333A; --gp-muted:#8C7176; --gp-heroink:#ffffff;
+    --gp-serif:"Cormorant Garamond",Georgia,serif; --gp-sans:"Jost",system-ui,sans-serif;
+  }
+  #guestPortal{min-height:100vh;background:var(--gp-bg);position:fixed;inset:0;overflow:auto;z-index:90;color:var(--gp-ink);font-family:var(--gp-sans)}
   .preview-banner{position:sticky;top:0;z-index:60;background:#fef3c7;color:#854d0e;text-align:center;padding:8px 14px;font-size:13px;font-weight:600;border-bottom:1px solid #fde68a;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
   .preview-banner .btn{padding:4px 10px;background:#854d0e;color:#fff;border-radius:6px;font-size:12px;cursor:pointer;border:0;font-weight:600}
   body.guest-mode > header.top,
@@ -208,61 +216,106 @@
   body.guest-mode > div.wrap,
   body.guest-mode > #onboarding,
   body.guest-mode > #lock { display:none !important }
-  .gp-top{position:sticky;top:0;z-index:50;background:linear-gradient(160deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;box-shadow:0 2px 14px rgba(0,0,0,.08)}
-  .gp-top-inner{max-width:780px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
-  .gp-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
-  .gp-heart{font-size:22px}
+  .gp-top{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--gp-bg) 86%,transparent);backdrop-filter:blur(10px);color:var(--gp-ink);border-bottom:1px solid var(--gp-line)}
+  .gp-top-inner{max-width:680px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+  .gp-brand{display:flex;align-items:center;gap:8px;font-family:var(--gp-serif);font-weight:600;font-size:22px;letter-spacing:.3px}
+  .gp-heart{font-size:17px;color:var(--gp-accent)}
   .gp-actions{display:flex;gap:8px}
-  .gp-icon-btn{background:rgba(255,255,255,.18);border:0;color:#fff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}
-  .gp-icon-btn:hover{background:rgba(255,255,255,.28)}
-  .gp-badge{position:absolute;top:-2px;right:-2px;background:#e11d48;color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700}
-  .gp-tabs{max-width:780px;margin:0 auto;padding:0 10px;display:flex;gap:4px;overflow-x:auto}
-  .gp-tab{background:transparent;border:0;color:rgba(255,255,255,.78);padding:10px 16px;cursor:pointer;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap}
-  .gp-tab.active{color:#fff;border-bottom-color:#fff}
-  .gp-wrap{max-width:780px;margin:0 auto;padding:18px}
-  .gp-card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
-  .gp-card h3{margin:0 0 8px;font-size:17px}
-  .gp-event{background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border-left:5px solid var(--accent)}
-  .gp-event-head{padding:14px 18px 8px}
-  .gp-event-title{font-size:18px;font-weight:700;margin:0 0 4px}
-  .gp-event-when{color:var(--muted);font-size:13px}
-  .gp-event-body{padding:6px 18px 16px;font-size:14px}
-  .gp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  .gp-icon-btn{background:color-mix(in srgb,var(--gp-accent) 14%,var(--gp-card));border:0;color:var(--gp-dark);width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center}
+  .gp-icon-btn:hover{filter:brightness(.97)}
+  .gp-badge{position:absolute;top:-2px;right:-2px;background:var(--gp-dark);color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-weight:600;border:2px solid var(--gp-bg)}
+  .gp-tabs{max-width:680px;margin:0 auto;padding:11px 14px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .gp-tabs::-webkit-scrollbar{display:none}
+  .gp-tab{flex:0 0 auto;background:transparent;border:1px solid var(--gp-line);color:var(--gp-muted);padding:8px 15px;cursor:pointer;font-weight:500;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;border-radius:30px;white-space:nowrap;transition:.18s}
+  .gp-tab.active{background:var(--gp-ink);color:var(--gp-card);border-color:var(--gp-ink)}
+  .gp-wrap{max-width:680px;margin:0 auto;padding:0 0 10px}
+  .gp-pad{padding:24px 20px 0}
+  .gp-hero{position:relative;min-height:404px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;color:var(--gp-heroink);overflow:hidden}
+  .gp-hero .bg{position:absolute;inset:0;background:linear-gradient(165deg,var(--gp-accent) 0%,var(--gp-dark) 68%,#3c262e 100%);background-size:cover;background-position:center}
+  .gp-hero .bg.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(40,26,32,.66),rgba(40,26,32,.12) 60%)}
+  .gp-hero .bg:not(.photo)::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 16%,rgba(255,255,255,.18),transparent 60%)}
+  .gp-hero .inner{position:relative;z-index:2;padding:64px 24px 34px}
+  .gp-kick{font-size:11px;letter-spacing:4px;text-transform:uppercase;opacity:.92;margin-bottom:14px}
+  .gp-names{font-family:var(--gp-serif);font-size:52px;line-height:1;font-weight:500;text-shadow:0 2px 18px rgba(0,0,0,.18)}
+  .gp-names .amp{display:block;font-size:23px;font-style:italic;font-weight:400;margin:6px 0;opacity:.9}
+  .gp-when{margin-top:15px;font-size:13px;letter-spacing:1.6px;opacity:.95}
+  .gp-sprig{font-size:18px;color:var(--gp-gold);margin-top:16px}
+  .gp-count{display:flex;justify-content:center;gap:10px;margin:-32px auto 0;position:relative;z-index:5;width:max-content;max-width:96%}
+  .gp-cbox{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:16px;width:64px;padding:12px 0;text-align:center;box-shadow:0 10px 26px rgba(70,44,52,.12)}
+  .gp-cbox b{font-family:var(--gp-serif);font-size:28px;font-weight:600;color:var(--gp-dark);display:block;line-height:1}
+  .gp-cbox span{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gp-muted)}
+  .gp-h{font-family:var(--gp-serif);font-size:27px;font-weight:600;margin:0 0 2px}
+  .gp-sub{font-size:13px;color:var(--gp-muted);margin-bottom:18px;letter-spacing:.3px}
+  .gp-note{font-family:var(--gp-serif);font-style:italic;font-size:19px;line-height:1.55;text-align:center;padding:6px 6px 2px}
+  .gp-div{display:flex;align-items:center;gap:12px;color:var(--gp-gold);justify-content:center;margin:22px 0}
+  .gp-div::before,.gp-div::after{content:"";height:1px;width:46px;background:var(--gp-line)}
+  .gp-quick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .gp-qcard{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:16px;padding:15px 14px;cursor:pointer;transition:.18s;text-align:left}
+  .gp-qcard:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(70,44,52,.1)}
+  .gp-qcard .qi{font-size:20px}
+  .gp-qcard h4{font-family:var(--gp-serif);font-size:18px;font-weight:600;margin:8px 0 1px}
+  .gp-qcard p{font-size:12px;color:var(--gp-muted)}
+  .gp-card{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:16px;padding:18px;margin-bottom:14px}
+  .gp-card h3{font-family:var(--gp-serif);margin:0 0 8px;font-size:20px;font-weight:600}
+  .gp-card h3.section-title{font-family:var(--gp-sans);font-size:12px;color:var(--gp-muted);text-transform:uppercase;letter-spacing:.1em;font-weight:500}
+  .gp-event{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:18px;margin-bottom:14px;overflow:hidden}
+  .gp-event-head{display:flex;gap:13px;align-items:center;padding:16px 16px 10px}
+  .gp-ev-ic{flex:0 0 44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--gp-accent) 16%,var(--gp-card));display:flex;align-items:center;justify-content:center;font-size:21px}
+  .gp-event-title{font-family:var(--gp-serif);font-size:21px;font-weight:600;margin:0;line-height:1}
+  .gp-event-when{color:var(--gp-muted);font-size:12.5px;margin-top:3px}
+  .gp-event-body{padding:0 16px 14px;font-size:13.5px}
+  .gp-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--gp-line)}
   .gp-row:first-child{border-top:0}
-  .gp-row .k{color:var(--muted);font-size:13px}
-  .gp-event-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .gp-event-actions .btn{flex:1;min-width:130px;justify-content:center}
-  .gp-empty{text-align:center;padding:40px 20px;color:var(--muted)}
-  .gp-empty .big{font-size:48px;margin-bottom:10px}
-  .gp-countdown{position:relative;text-align:center;padding:32px 20px 28px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;border-radius:22px;margin-bottom:14px;box-shadow:0 8px 28px rgba(0,0,0,.10);overflow:hidden}
-  .gp-countdown::before{content:"💕";position:absolute;font-size:140px;opacity:.07;top:-30px;right:-20px;transform:rotate(-12deg);pointer-events:none}
-  .gp-countdown .couple-name{font-size:24px;font-weight:700;letter-spacing:.01em;margin-bottom:4px;line-height:1.2}
-  .gp-countdown .wed-date{font-size:13px;opacity:.9;font-weight:500;letter-spacing:.04em;margin-bottom:18px}
-  .gp-countdown .days{font-size:64px;font-weight:800;line-height:1;margin:4px 0;font-feature-settings:"tnum"}
-  .gp-countdown .lab{font-size:12px;opacity:.85;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
-  .gp-card h3.section-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px}
-  .gp-next{background:linear-gradient(135deg,var(--accent-soft) 0%,#fff 100%);border-left:5px solid var(--accent);padding:18px 20px;border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px}
-  .gp-next .knm{font-size:11px;font-weight:700;color:var(--accent-dark);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
-  .gp-next h3{font-size:20px;margin:0 0 4px}
-  .gp-next .meta{font-size:13px;color:var(--muted);margin-bottom:10px}
-  .gp-alert{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
-  .gp-alert.unread{background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, var(--card)) 0%, var(--card) 60%)}
-  .gp-alert h4{margin:0 0 4px;font-size:15px}
-  .gp-alert .when{font-size:12px;color:var(--muted)}
+  .gp-row .k{color:var(--gp-muted);font-size:13px}
+  .gp-pill{display:inline-block;background:color-mix(in srgb,var(--gp-accent) 16%,var(--gp-card));color:var(--gp-dark);font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:20px;font-weight:500}
+  .gp-event-actions{display:flex;gap:8px;flex-wrap:wrap;padding:2px 16px 16px}
+  .gp-event-actions .btn,.gp-btn{flex:1;min-width:130px;border:1px solid var(--gp-dark);background:transparent;color:var(--gp-dark);font-family:var(--gp-sans);font-size:12.5px;font-weight:500;padding:10px;border-radius:24px;cursor:pointer;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+  .gp-event-actions .btn.fill,.gp-btn.fill{background:var(--gp-dark);color:#fff}
+  .gp-hotel{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:18px;overflow:hidden;margin-bottom:14px}
+  .gp-hotel .ph{height:88px;background:linear-gradient(135deg,var(--gp-accent),var(--gp-dark));background-size:cover;background-position:center}
+  .gp-hotel .in{padding:14px 16px}
+  .gp-hotel h4{font-family:var(--gp-serif);font-size:20px;font-weight:600}
+  .gp-tag{display:inline-block;background:color-mix(in srgb,var(--gp-gold) 24%,var(--gp-card));color:var(--gp-dark);font-size:11px;padding:3px 9px;border-radius:14px;font-weight:500;margin-left:6px;letter-spacing:.3px}
+  .gp-faq{background:var(--gp-card);border:1px solid var(--gp-line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+  .gp-faq .q{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 16px;font-family:var(--gp-serif);font-size:18px;font-weight:600;cursor:pointer}
+  .gp-faq .q i{color:var(--gp-accent);transition:.2s;font-style:normal;font-size:15px}
+  .gp-faq.open .q i{transform:rotate(180deg)}
+  .gp-faq .a{max-height:0;overflow:hidden;transition:.28s;font-size:13.5px;color:var(--gp-muted);line-height:1.6;white-space:pre-wrap}
+  .gp-faq.open .a{max-height:600px;padding:0 16px 15px}
+  .gp-story-ph{height:190px;border-radius:18px;background:linear-gradient(135deg,var(--gp-accent),var(--gp-dark));background-size:cover;background-position:center;margin-bottom:18px}
+  .gp-story{font-size:14px;line-height:1.78;white-space:pre-wrap}
+  .gp-story .lead{font-family:var(--gp-serif);font-size:20px;font-style:italic;line-height:1.5;color:var(--gp-dark);margin-bottom:14px}
+  .gp-album{background:linear-gradient(150deg,var(--gp-accent),var(--gp-dark));border-radius:20px;padding:30px 22px;text-align:center;color:#fff;margin-bottom:16px}
+  .gp-album .ai{font-size:32px}
+  .gp-album h3{font-family:var(--gp-serif);font-size:25px;font-weight:600;margin:8px 0 6px;color:#fff}
+  .gp-album p{font-size:13px;opacity:.95;line-height:1.5}
+  .gp-empty{text-align:center;padding:48px 20px;color:var(--gp-muted);font-family:var(--gp-serif);font-size:18px}
+  .gp-empty .big{font-size:42px;margin-bottom:10px;font-family:var(--gp-sans)}
+  .gp-next{background:color-mix(in srgb,var(--gp-accent) 12%,var(--gp-card));border-radius:16px;padding:16px 18px;margin-bottom:14px}
+  .gp-next .knm{font-size:11px;font-weight:600;color:var(--gp-dark);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+  .gp-next h3{font-family:var(--gp-serif);font-size:22px;margin:0 0 4px;font-weight:600}
+  .gp-next .meta{font-size:13px;color:var(--gp-muted);margin-bottom:10px}
+  .gp-alert{background:var(--gp-card);border:1px solid var(--gp-line);border-left:4px solid var(--gp-dark);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:12px}
+  .gp-alert.unread{background:color-mix(in srgb,var(--gp-accent) 9%,var(--gp-card))}
+  .gp-alert h4{font-family:var(--gp-serif);margin:0 0 4px;font-size:18px;font-weight:600}
+  .gp-alert .when{font-size:11px;color:var(--gp-muted);text-transform:uppercase;letter-spacing:.6px;margin-top:5px}
   .gp-rsvp{display:flex;gap:6px}
-  .gp-rsvp button{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;font-size:13px}
-  .gp-rsvp button.yes.on{background:#10b981;color:#fff;border-color:#10b981}
-  .gp-rsvp button.no.on{background:#94a3b8;color:#fff;border-color:#94a3b8}
-  .gp-pending{text-align:center;padding:40px 24px}
-  .gp-pending .emoji{font-size:48px;margin-bottom:10px}
-  .gp-google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer;font-weight:600;font-size:15px;color:#1f2937;margin-bottom:10px}
+  .gp-rsvp button{flex:1;padding:9px 10px;border-radius:12px;border:1px solid var(--gp-line);background:var(--gp-card);cursor:pointer;font-weight:500;font-size:13px;color:var(--gp-muted);font-family:var(--gp-sans)}
+  .gp-rsvp button.yes.on{background:#EAF3EC;color:#3B6D45;border-color:#bcd9c2}
+  .gp-rsvp button.no.on{background:#FAEBEB;color:#A32D2D;border-color:#f0c8c8}
+  .gp-pending{text-align:center;padding:48px 24px}
+  .gp-pending .emoji{font-size:46px;margin-bottom:10px}
+  .gp-pending h2{font-family:var(--gp-serif);font-weight:600}
+  .gp-google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid var(--gp-line);background:#fff;border-radius:12px;cursor:pointer;font-weight:500;font-size:15px;color:#1f2937;margin-bottom:10px}
   .gp-google-btn:hover{background:#f8fafc}
-  .gp-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
-  .gp-divider::before,.gp-divider::after{content:"";flex:1;height:1px;background:var(--line)}
-  .gp-signin-tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
-  .gp-signin-tabs button{background:transparent;border:0;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:2px solid transparent}
-  .gp-signin-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
-  @media(max-width:520px){.gp-event-actions .btn{min-width:0;flex:1 1 100%}}
+  .gp-divider{display:flex;align-items:center;gap:10px;color:var(--gp-muted);font-size:12px;margin:14px 0}
+  .gp-divider::before,.gp-divider::after{content:"";flex:1;height:1px;background:var(--gp-line)}
+  .gp-signin-tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--gp-line)}
+  .gp-signin-tabs button{background:transparent;border:0;padding:8px 12px;cursor:pointer;color:var(--gp-muted);font-weight:500;border-bottom:2px solid transparent}
+  .gp-signin-tabs button.on{color:var(--gp-accent);border-bottom-color:var(--gp-accent)}
+  .gp-foot{text-align:center;font-size:11px;color:var(--gp-muted);padding:22px 20px 30px;letter-spacing:.5px}
+  .gp-foot .h{color:var(--gp-accent)}
+  @media(max-width:520px){.gp-event-actions .btn,.gp-btn{min-width:0;flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -478,6 +531,52 @@
         <div class="field"><input type="text" id="ppLinkInput" readonly onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:13px"></div>
       </div>
 
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <h3 style="margin:0">Portal design</h3>
+          <button class="btn ghost sm" onclick="dOpenGuestLink()">↗ Preview portal</button>
+        </div>
+        <p class="muted" style="font-size:13px;margin:0 0 12px">Pick a look — guests see it instantly.</p>
+        <div id="ppDesignSwatches" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px"></div>
+        <div class="grid cols-2" style="margin-top:14px;gap:12px">
+          <div class="field"><label class="fl">Accent color (optional)</label><input type="color" id="ppAccent" onchange="ppPortalSet('accent',this.value)" style="height:42px;padding:2px"></div>
+          <div class="field"><label class="fl">Heading font</label>
+            <select id="ppFont" onchange="ppPortalSet('font',this.value)">
+              <option value="">Preset default</option>
+              <option>Cormorant Garamond</option><option>Playfair Display</option><option>Marcellus</option><option>Fraunces</option>
+            </select></div>
+        </div>
+        <div style="margin:-4px 0 10px"><button class="btn ghost sm" onclick="ppPortalSet('accent','')">Reset accent to preset</button></div>
+        <div class="field"><label class="fl">Cover photo URL (optional)</label><input type="text" id="ppCover" placeholder="https://… image for the hero banner" oninput="ppPortalSetDeb('cover',this.value)"></div>
+        <div class="field"><label class="fl">Welcome message</label><textarea id="ppWelcome" rows="2" placeholder="A warm line guests see on the home screen." oninput="ppPortalSetDeb('welcome',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin:0 0 4px">What guests can see</h3>
+        <p class="muted" style="font-size:13px;margin:0 0 8px">Turn sections on or off for your guests.</p>
+        <div id="ppSectionToggles"></div>
+      </div>
+
+      <div class="card" id="ppTravelCard" style="margin-bottom:16px;display:none">
+        <h3 style="margin:0 0 8px">Travel &amp; stay</h3>
+        <div class="field"><label class="fl">Getting here / airport</label><textarea id="ppTrAirport" rows="2" placeholder="Nearest airport, distance, transfers…" oninput="ppTravelSetDeb('airport',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
+        <div class="field"><label class="fl">Shuttle info</label><textarea id="ppTrShuttle" rows="2" placeholder="Shuttle times and pickup points…" oninput="ppTravelSetDeb('shuttle',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
+        <div class="field"><label class="fl">Travel desk contact</label><input id="ppTrContact" placeholder="e.g. +91 98765 43210" oninput="ppTravelSetDeb('contact',this.value)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px"><b style="font-size:13px">Hotels</b><button class="btn ghost sm" onclick="ppAddHotel()">+ Add hotel</button></div>
+        <div id="ppHotels"></div>
+      </div>
+
+      <div class="card" id="ppFaqCard" style="margin-bottom:16px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">FAQ</h3><button class="btn ghost sm" onclick="ppAddFaq()">+ Add question</button></div>
+        <div id="ppFaqs"></div>
+      </div>
+
+      <div class="card" id="ppStoryCard" style="margin-bottom:16px;display:none">
+        <h3 style="margin:0 0 8px">Our story</h3>
+        <div class="field"><label class="fl">Story photo URL (optional)</label><input id="ppStoryPhoto" placeholder="https://… a photo of you two" oninput="ppPortalSetDeb('story_photo',this.value)"></div>
+        <div class="field"><label class="fl">Your story</label><textarea id="ppStory" rows="5" placeholder="How you met, the proposal, a note to your guests…" oninput="ppPortalSetDeb('story',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
+      </div>
+
       <div class="card" id="ppApprovalCard" style="margin-bottom:16px;display:none">
         <h3 style="margin:0 0 8px">Approval inbox</h3>
         <div id="ppPendingList"></div>
@@ -527,8 +626,28 @@ let guestEventFilter = null;
 const blank = {
   settings:{ partnerA:"", partnerB:"", date:"", venue:"", budget:0, theme:"rose", currency:"USD", pinA:"", pinB:"" },
   tasks:[], budget:[], events:[], guests:[], vendors:[],
-  know_before_general:""
+  know_before_general:"",
+  portal:{
+    design:"blush", accent:"", font:"", cover:"",
+    show:{ schedule:true, venues:true, travel:false, faq:false, story:false, photos:false },
+    welcome:"",
+    travel:{ airport:"", shuttle:"", contact:"", hotels:[] },
+    faq:[],
+    story:""
+  }
 };
+function blankPortal(){ return JSON.parse(JSON.stringify(blank.portal)); }
+function ensurePortal(){
+  if(!S.portal || typeof S.portal!=="object") S.portal = blankPortal();
+  const d = blankPortal();
+  for(const k in d){ if(S.portal[k]===undefined) S.portal[k]=d[k]; }
+  if(!S.portal.show || typeof S.portal.show!=="object") S.portal.show = d.show;
+  else for(const k in d.show){ if(S.portal.show[k]===undefined) S.portal.show[k]=d.show[k]; }
+  if(!S.portal.travel || typeof S.portal.travel!=="object") S.portal.travel = d.travel;
+  if(!Array.isArray(S.portal.faq)) S.portal.faq = [];
+  if(!Array.isArray(S.portal.travel.hotels)) S.portal.travel.hotels = [];
+  return S.portal;
+}
 let S = load();
 
 function load(){
@@ -1026,8 +1145,75 @@ function renderPortal(){
   // Reflect the current "things to know" general text from S.data (saved under key)
   const t = document.getElementById("ppKnowGeneral");
   if(t && document.activeElement !== t) t.value = (S.know_before_general||"");
+  ppRenderPortalEditor();
   // Lazy-load on first render in this tab
   ppMaybeLoad();
+}
+
+function ppPortal(){ return ensurePortal(); }
+let _ppPortalT=null;
+function ppDebSave(){ if(_ppPortalT) clearTimeout(_ppPortalT); _ppPortalT=setTimeout(()=>save(),500); }
+function ppPortalSet(key,val){ ppPortal()[key]=val; save(); ppRenderPortalEditor(); }
+function ppPortalSetDeb(key,val){ ppPortal()[key]=val; ppDebSave(); }
+function ppSetDesign(key){ ppPortal().design=key; save(); ppRenderPortalEditor(); }
+function ppToggleSection(k,on){ ppPortal().show[k]=!!on; save(); ppRenderPortalEditor(); }
+function ppTravelSetDeb(key,val){ ppPortal().travel[key]=val; ppDebSave(); }
+function ppAddHotel(){ ppPortal().travel.hotels.push({id:uid(),name:"",tag:"",rate:"",code:"",map_link:"",book_link:"",note:"",photo:""}); save(); ppRenderHotels(); }
+function ppDelHotel(id){ const t=ppPortal().travel; t.hotels=t.hotels.filter(h=>h.id!==id); save(); ppRenderHotels(); }
+function ppHotelField(id,key,val){ const h=ppPortal().travel.hotels.find(x=>x.id===id); if(h){ h[key]=val; ppDebSave(); } }
+function ppAddFaq(){ ppPortal().faq.push({id:uid(),q:"",a:""}); save(); ppRenderFaqs(); }
+function ppDelFaq(id){ const p=ppPortal(); p.faq=p.faq.filter(x=>x.id!==id); save(); ppRenderFaqs(); }
+function ppFaqField(id,key,val){ const x=ppPortal().faq.find(f=>f.id===id); if(x){ x[key]=val; ppDebSave(); } }
+function ppRenderHotels(){
+  const c=document.getElementById('ppHotels'); if(!c) return;
+  const hs=ppPortal().travel.hotels; hs.forEach(h=>{ if(!h.id) h.id=uid(); });
+  c.innerHTML=hs.length?hs.map(h=>`<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
+    <div style="display:flex;gap:8px"><input placeholder="Hotel name" value="${esc(h.name||'')}" oninput="ppHotelField('${h.id}','name',this.value)" style="flex:1">
+      <input placeholder="Tag e.g. Room block" value="${esc(h.tag||'')}" oninput="ppHotelField('${h.id}','tag',this.value)" style="width:140px"></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><input placeholder="Rate e.g. ₹8,500/night" value="${esc(h.rate||'')}" oninput="ppHotelField('${h.id}','rate',this.value)" style="flex:1">
+      <input placeholder="Booking code" value="${esc(h.code||'')}" oninput="ppHotelField('${h.id}','code',this.value)" style="flex:1"></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><input placeholder="Map link" value="${esc(h.map_link||'')}" oninput="ppHotelField('${h.id}','map_link',this.value)" style="flex:1">
+      <input placeholder="Book link" value="${esc(h.book_link||'')}" oninput="ppHotelField('${h.id}','book_link',this.value)" style="flex:1"></div>
+    <textarea placeholder="Note (optional)" oninput="ppHotelField('${h.id}','note',this.value)" rows="1" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px">${esc(h.note||'')}</textarea>
+    <div style="text-align:right;margin-top:4px"><button class="btn ghost sm" onclick="ppDelHotel('${h.id}')">Remove</button></div>
+  </div>`).join(""):`<p class="muted" style="font-size:13px">No hotels yet.</p>`;
+}
+function ppRenderFaqs(){
+  const c=document.getElementById('ppFaqs'); if(!c) return;
+  const fs=ppPortal().faq; fs.forEach(x=>{ if(!x.id) x.id=uid(); });
+  c.innerHTML=fs.length?fs.map(x=>`<div style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
+    <input placeholder="Question" value="${esc(x.q||'')}" oninput="ppFaqField('${x.id}','q',this.value)" style="width:100%">
+    <textarea placeholder="Answer" oninput="ppFaqField('${x.id}','a',this.value)" rows="2" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px">${esc(x.a||'')}</textarea>
+    <div style="text-align:right;margin-top:4px"><button class="btn ghost sm" onclick="ppDelFaq('${x.id}')">Remove</button></div>
+  </div>`).join(""):`<p class="muted" style="font-size:13px">No questions yet.</p>`;
+}
+function ppRenderPortalEditor(){
+  const sw=document.getElementById('ppDesignSwatches'); if(!sw) return;
+  const p=ppPortal();
+  sw.innerHTML=Object.entries(GP_DESIGNS).map(([k,d])=>{
+    const sel=p.design===k;
+    return `<div onclick="ppSetDesign('${k}')" title="${esc(d.name)}" style="cursor:pointer;border:2px solid ${sel?'var(--accent)':'transparent'};border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)">
+      <div style="height:44px;background:linear-gradient(135deg,${d.accent},${d.dark})"></div>
+      <div style="padding:6px 8px;font-size:11px;font-weight:600;background:#fff;color:#333">${esc(d.name)}</div></div>`;
+  }).join("");
+  const acc=document.getElementById('ppAccent'); if(acc) acc.value=p.accent||(GP_DESIGNS[p.design]||GP_DESIGNS.blush).accent;
+  const fn=document.getElementById('ppFont'); if(fn) fn.value=p.font||"";
+  const cov=document.getElementById('ppCover'); if(cov && document.activeElement!==cov) cov.value=p.cover||"";
+  const wel=document.getElementById('ppWelcome'); if(wel && document.activeElement!==wel) wel.value=p.welcome||"";
+  const secs=[["schedule","Schedule"],["venues","Venues"],["travel","Travel & stay"],["faq","FAQ"],["story","Our story"],["photos","Photos (coming soon)"]];
+  document.getElementById('ppSectionToggles').innerHTML=secs.map(([k,l])=>
+    `<label style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer">
+      <span>${l}</span><input type="checkbox" ${p.show[k]?'checked':''} onchange="ppToggleSection('${k}',this.checked)" style="width:18px;height:18px;cursor:pointer"></label>`).join("");
+  document.getElementById('ppTravelCard').style.display=p.show.travel?'block':'none';
+  document.getElementById('ppFaqCard').style.display=p.show.faq?'block':'none';
+  document.getElementById('ppStoryCard').style.display=p.show.story?'block':'none';
+  const tr=p.travel;
+  const ta=document.getElementById('ppTrAirport'); if(ta && document.activeElement!==ta) ta.value=tr.airport||"";
+  const ts=document.getElementById('ppTrShuttle'); if(ts && document.activeElement!==ts) ts.value=tr.shuttle||"";
+  const tc=document.getElementById('ppTrContact'); if(tc && document.activeElement!==tc) tc.value=tr.contact||"";
+  const sp=document.getElementById('ppStoryPhoto'); if(sp && document.activeElement!==sp) sp.value=p.story_photo||"";
+  const stx=document.getElementById('ppStory'); if(stx && document.activeElement!==stx) stx.value=p.story||"";
+  ppRenderHotels(); ppRenderFaqs();
 }
 
 function ppEnsureLoaded(force){
@@ -1854,6 +2040,7 @@ async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args); if(error)
 
 function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests, vendors:S.vendors||[],
   know_before_general: S.know_before_general||"",
+  portal: ensurePortal(),
   settings:{ partnerA:S.settings.partnerA, partnerB:S.settings.partnerB, date:S.settings.date,
     venue:S.settings.venue, budget:S.settings.budget, theme:S.settings.theme, currency:S.settings.currency } }; }
 function adoptCouple(d){ if(!d) return; applyingRemote=true;
@@ -1861,6 +2048,7 @@ function adoptCouple(d){ if(!d) return; applyingRemote=true;
   const data=d.data||{};
   S.tasks=data.tasks||[]; S.budget=data.budget||[]; S.events=data.events||[]; S.guests=data.guests||[]; S.vendors=data.vendors||[];
   S.know_before_general = data.know_before_general || "";
+  S.portal = data.portal || blankPortal(); ensurePortal();
   if(data.settings) S.settings=Object.assign(S.settings, data.settings);
   if(d.bride_name) S.settings.partnerA=d.bride_name;
   if(d.groom_name) S.settings.partnerB=d.groom_name;
@@ -2321,6 +2509,50 @@ async function gpGoogleSignin(){
 }
 
 /* ---- Portal rendering ---- */
+function gpShade(hex,pct){
+  try{ let h=String(hex).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    let r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+    const f=(pct<0)?(1+pct/100):(pct/100); const m=(pct<0)?0:255;
+    r=Math.round((m-r)*(pct<0?0:f)+r*(pct<0?f:1)); // simplified below
+    const adj=v=> pct<0 ? Math.round(v*(1+pct/100)) : Math.round(v+(255-v)*(pct/100));
+    r=adj(parseInt(h.slice(0,2),16)); g=adj(parseInt(h.slice(2,4),16)); b=adj(parseInt(h.slice(4,6),16));
+    const x=v=>('0'+Math.max(0,Math.min(255,v)).toString(16)).slice(-2);
+    return '#'+x(r)+x(g)+x(b);
+  }catch(e){ return hex; }
+}
+const GP_DESIGNS = {
+  blush:     {name:"Blush & Gold",        accent:"#C98B86", dark:"#8f4f59", gold:"#C39A5B", bg:"#FBF7F3", card:"#FFFFFF", line:"#EADCD4", ink:"#46333A", muted:"#8C7176", heroink:"#FFFFFF", serif:"'Cormorant Garamond',Georgia,serif"},
+  sage:      {name:"Sage & Linen",        accent:"#8FA37F", dark:"#46583F", gold:"#C9A86B", bg:"#F6F4ED", card:"#FFFFFF", line:"#E2E4D6", ink:"#37402F", muted:"#76806C", heroink:"#FFFFFF", serif:"'Cormorant Garamond',Georgia,serif"},
+  midnight:  {name:"Midnight & Champagne", accent:"#3C4D6B", dark:"#1F2A40", gold:"#C8A86B", bg:"#F7F5F0", card:"#FFFFFF", line:"#E4E0D6", ink:"#222A38", muted:"#6F7785", heroink:"#F3EEDE", serif:"'Playfair Display',Georgia,serif"},
+  terracotta:{name:"Terracotta & Sand",   accent:"#BD6F4D", dark:"#8F4A30", gold:"#D9A441", bg:"#F7EFE6", card:"#FFFFFF", line:"#EBDDCD", ink:"#4A2E22", muted:"#8A6C5C", heroink:"#FFFFFF", serif:"'Fraunces',Georgia,serif"},
+  maroon:    {name:"Maroon & Marigold",   accent:"#8A2F3D", dark:"#5D1F29", gold:"#E1A33B", bg:"#FBF3E6", card:"#FFFFFF", line:"#ECDFCB", ink:"#4A1C24", muted:"#8A6B62", heroink:"#FBE7C9", serif:"'Marcellus',Georgia,serif"},
+  noir:      {name:"Classic Noir",        accent:"#2B2B2B", dark:"#111111", gold:"#B79268", bg:"#FFFFFF", card:"#FAFAF8", line:"#E6E4DF", ink:"#1A1A1A", muted:"#7A7873", heroink:"#FFFFFF", serif:"'Marcellus',Georgia,serif"}
+};
+const GP_FONTS = {
+  "Cormorant Garamond":"'Cormorant Garamond',Georgia,serif",
+  "Playfair Display":"'Playfair Display',Georgia,serif",
+  "Marcellus":"'Marcellus',Georgia,serif",
+  "Fraunces":"'Fraunces',Georgia,serif"
+};
+function gpDesignVars(portal){
+  portal = portal || {};
+  const base = GP_DESIGNS[portal.design] || GP_DESIGNS.blush;
+  const v = Object.assign({}, base);
+  if(portal.accent){ v.accent = portal.accent; v.dark = gpShade(portal.accent,-26); }
+  if(portal.font && GP_FONTS[portal.font]) v.serif = GP_FONTS[portal.font];
+  return v;
+}
+function gpApplyDesign(portal){
+  const v = gpDesignVars(portal);
+  [document.getElementById('guestPortal'), document.getElementById('caCard'), document.getElementById('cloudauth')].forEach(el=>{
+    if(!el) return; const st=el.style;
+    st.setProperty('--gp-accent',v.accent); st.setProperty('--gp-dark',v.dark); st.setProperty('--gp-gold',v.gold);
+    st.setProperty('--gp-bg',v.bg); st.setProperty('--gp-card',v.card); st.setProperty('--gp-line',v.line);
+    st.setProperty('--gp-ink',v.ink); st.setProperty('--gp-muted',v.muted); st.setProperty('--gp-heroink',v.heroink);
+    st.setProperty('--gp-serif',v.serif);
+  });
+}
+
 function guestEnterPortal(loaded){
   if(loaded && loaded.error){ showGuestSignin(loaded.error); return; }
   // Preview banner — only when previewing as the couple
@@ -2341,6 +2573,8 @@ function guestEnterPortal(loaded){
   G.rsvpsByEvent = {};
   (loaded.rsvps||[]).forEach(r=> G.rsvpsByEvent[r.event_id] = r);
   G.alerts = loaded.alerts || [];
+  G.portal = (loaded.plan_data && loaded.plan_data.portal) || {};
+  gpApplyDesign(G.portal);
   hideCloudAuth();
   document.body.classList.add("guest-mode");
   document.getElementById("guestPortal").style.display = "block";
@@ -2365,39 +2599,79 @@ function gpRenderPending(){
     </div>`;
 }
 
+function gpAvailTabs(){
+  const p=G.portal||{}; const show=p.show||{};
+  const hasVenue=G.events.some(e=>(e.venue||"").trim() && !isVenueHiddenForGuests(e));
+  const tr=p.travel||{}; const hasTravel=(tr.hotels&&tr.hotels.length)||(tr.airport||"").trim()||(tr.shuttle||"").trim()||(tr.contact||"").trim();
+  const hasFaq=Array.isArray(p.faq)&&p.faq.length;
+  const hasStory=(p.story||"").trim();
+  const knowGeneral=G.data?.plan_data?.know_before_general||"";
+  const hasKnow=knowGeneral.trim()||G.events.some(e=>e.know_before_notes);
+  const unread=(G.alerts||[]).filter(a=>!a.read).length;
+  const tabs=[{k:"home",label:"Home"}];
+  if(show.schedule!==false && G.events.length) tabs.push({k:"schedule",label:"Schedule"});
+  if(show.venues!==false && hasVenue) tabs.push({k:"venues",label:"Venues"});
+  if(show.travel && hasTravel) tabs.push({k:"travel",label:"Travel"});
+  if(show.faq && hasFaq) tabs.push({k:"faq",label:"FAQ"});
+  if(show.story && hasStory) tabs.push({k:"story",label:"Our story"});
+  if(hasKnow) tabs.push({k:"know",label:"Know"});
+  tabs.push({k:"rsvp",label:"My RSVP"});
+  if(show.photos) tabs.push({k:"photos",label:"Photos"});
+  tabs.push({k:"alerts",label:"Alerts"+(unread?` (${unread})`:"")});
+  return tabs;
+}
+function gpEventIcon(name){
+  const n=String(name||"").toLowerCase();
+  if(/mehndi|henna|mehendi/.test(n)) return "🌿";
+  if(/sangeet|music|dj|dance/.test(n)) return "🎶";
+  if(/haldi|pithi/.test(n)) return "🌼";
+  if(/cocktail/.test(n)) return "🍸";
+  if(/reception|dinner/.test(n)) return "🥂";
+  if(/brunch|breakfast|lunch/.test(n)) return "🍽";
+  if(/engage|roka|ring/.test(n)) return "💑";
+  if(/party|welcome/.test(n)) return "🎉";
+  if(/wedding|ceremony|vivah|nikah|muhurtham|pheras|baraat|varmala|shaadi/.test(n)) return "💍";
+  return "✨";
+}
 function gpRenderTabs(){
-  // Restore the top-right actions in case we were previously pending.
-  const actions = document.querySelector("#guestPortal .gp-actions");
-  if(actions) actions.style.display = "";
-  const unread = (G.alerts||[]).filter(a=>!a.read).length;
-  const tabs = [
-    {k:"home", label:"Home"},
-    {k:"schedule", label:"Schedule"},
-    {k:"venues", label:"Venues"},
-    {k:"know", label:"Know"},
-    {k:"rsvp", label:"My RSVP"},
-    {k:"alerts", label:"Alerts"+(unread?` (${unread})`:"")}
-  ];
-  document.getElementById("gpTabs").innerHTML = tabs.map(t=>
+  const actions=document.querySelector("#guestPortal .gp-actions");
+  if(actions) actions.style.display="";
+  const tabs=gpAvailTabs();
+  if(!tabs.some(t=>t.k===G.tab)) G.tab="home";
+  document.getElementById("gpTabs").innerHTML=tabs.map(t=>
     `<button class="gp-tab${t.k===G.tab?' active':''}" onclick="gpShowTab('${t.k}')">${esc(t.label)}</button>`
   ).join("");
-  const badge = document.getElementById("gpUnread");
-  if(unread>0){ badge.textContent = unread; badge.style.display = "flex"; }
-  else { badge.style.display = "none"; }
+  const unread=(G.alerts||[]).filter(a=>!a.read).length;
+  const badge=document.getElementById("gpUnread");
+  if(badge){ if(unread>0){ badge.textContent=unread; badge.style.display="flex"; } else badge.style.display="none"; }
 }
-
 function gpShowTab(name){
-  // Hard gate: a pending/rejected guest can never view tabs. The bell, a
-  // direct JS call, or any other navigation falls through to the pending screen.
-  if(G.status !== "approved"){ gpRenderPending(); return; }
-  G.tab = name; gpRenderTabs();
-  const m = document.getElementById("gpMain");
-  if(name==="home")     m.innerHTML = gpRenderHome();
-  else if(name==="schedule") m.innerHTML = gpRenderSchedule();
-  else if(name==="venues")   m.innerHTML = gpRenderVenues();
-  else if(name==="know")     m.innerHTML = gpRenderKnow();
-  else if(name==="rsvp")     m.innerHTML = gpRenderRsvp();
-  else if(name==="alerts")   { m.innerHTML = gpRenderAlerts(); gpMarkAlertsRead(); }
+  if(G.status!=="approved"){ gpRenderPending(); return; }
+  G.tab=name; gpRenderTabs();
+  const m=document.getElementById("gpMain");
+  const R={home:gpRenderHome,schedule:gpRenderSchedule,venues:gpRenderVenues,travel:gpRenderTravel,faq:gpRenderFaq,story:gpRenderStory,know:gpRenderKnow,rsvp:gpRenderRsvp,photos:gpRenderPhotos,alerts:gpRenderAlerts};
+  m.innerHTML=(R[name]||gpRenderHome)();
+  if(name==="home") gpStartCountdown();
+  if(name==="faq") gpBindFaq();
+  if(name==="alerts") gpMarkAlertsRead();
+  const gp=document.getElementById("guestPortal"); if(gp) gp.scrollTop=0;
+}
+let _gpCountT=null;
+function gpStartCountdown(){
+  const date=G.data?.couple?.wedding_date;
+  if(_gpCountT) clearInterval(_gpCountT);
+  function paint(){
+    const box=document.getElementById('gpCount'); if(!box){ if(_gpCountT)clearInterval(_gpCountT); return; }
+    if(!date){ box.innerHTML=`<div class="gp-cbox" style="width:auto;padding:12px 22px"><b>&#9825;</b><span>see you soon</span></div>`; return; }
+    const target=new Date(date+"T16:00:00"); let diff=target-new Date();
+    if(diff<=0){ box.innerHTML=`<div class="gp-cbox" style="width:auto;padding:12px 22px"><b>&#9825;</b><span>the big day is here</span></div>`; if(_gpCountT)clearInterval(_gpCountT); return; }
+    const d=Math.floor(diff/8.64e7),h=Math.floor(diff%8.64e7/3.6e6),mi=Math.floor(diff%3.6e6/6e4),se=Math.floor(diff%6e4/1e3);
+    box.innerHTML=[[d,'Days'],[h,'Hrs'],[mi,'Min'],[se,'Sec']].map(x=>`<div class="gp-cbox"><b>${x[0]}</b><span>${x[1]}</span></div>`).join("");
+  }
+  paint(); _gpCountT=setInterval(paint,1000);
+}
+function gpBindFaq(){
+  document.querySelectorAll('#gpMain .gp-faq .q').forEach(q=>q.onclick=()=>q.parentElement.classList.toggle('open'));
 }
 
 function gpDaysUntil(dateStr){
@@ -2455,123 +2729,170 @@ function gpUpcomingEvents(){
 }
 
 function gpRenderHome(){
-  const date = G.data?.couple?.wedding_date;
-  const days = gpDaysUntil(date);
-  const upcoming = gpUpcomingEvents();
-  const next = upcoming[0];
-  const recentAlerts = (G.alerts||[]).slice(0,3);
-  const guestName = G.data?.guest?.name || "";
-  const firstName = guestName.split(/\s+/)[0] || "";
-  const initial = firstName ? firstName[0].toUpperCase() : "👋";
-  const dateLabel = date ? gpFmtDate(date) : "";
+  const p=G.portal||{};
+  const date=G.data?.couple?.wedding_date;
+  const b=G.data?.couple?.bride_name||""; const g=G.data?.couple?.groom_name||"";
+  const dateLabel=date?gpFmtDate(date):"";
+  const cover=(p.cover||"").trim();
+  const heroBg=cover?`<div class="bg photo" style="background-image:url('${esc(cover)}')"></div>`:`<div class="bg"></div>`;
+  const upcoming=gpUpcomingEvents(); const next=upcoming[0];
+  const recentAlerts=(G.alerts||[]).slice(0,2);
+  const navTabs=gpAvailTabs().filter(t=>!["home","alerts"].includes(t.k));
+  const qIcon={schedule:"📅",venues:"📍",travel:"✈",faq:"❔",story:"❧",know:"ℹ️",rsvp:"✦",photos:"📷"};
+  const qDesc={schedule:"Events & timing",venues:"Where to go",travel:"Hotels & rides",faq:"Good to know",story:"How we met",know:"Before you go",rsvp:"Reply per event",photos:"Shared album"};
+  const welcome=(p.welcome||"").trim()||"We can't wait to celebrate with you. Here's everything you'll need for our celebrations.";
   return `
-    <div class="gp-countdown">
-      <div class="couple-name">${esc(G.coupleName)}</div>
-      ${dateLabel?`<div class="wed-date">${esc(dateLabel)}</div>`:""}
-      <div class="days">${days==null?"💕":(days>=0?days:0)}</div>
-      <div class="lab">${days==null?"See you soon":(days>0?"days to go":(days===0?"today is the day!":"the big day was "+(-days)+" days ago"))}</div>
+  <div class="gp-hero">${heroBg}
+    <div class="inner">
+      <div class="gp-kick">Together with their families</div>
+      <div class="gp-names">${esc(b)}<span class="amp">&amp;</span>${esc(g)}</div>
+      <div class="gp-sprig">&#10087;</div>
+      ${dateLabel?`<div class="gp-when">${esc(dateLabel.toUpperCase())}</div>`:""}
     </div>
-    ${next ? `<div class="gp-next"><div class="knm">Up next</div><h3>${esc(next.ev.name||"Event")}</h3>
-      <div class="meta">${esc(gpEventDateTime(next.ev))}${(next.ev.venue && !isVenueHiddenForGuests(next.ev))?` · 📍 ${esc(next.ev.venue)}`:""}</div>
-      <button class="btn" onclick="gpShowTab('schedule')">View full schedule →</button>
-    </div>` : ""}
-    ${recentAlerts.length?`<div class="gp-card"><h3>Latest updates</h3>
-      ${recentAlerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}"><h4>${esc(a.title)}</h4>
-        ${a.body?`<div style="font-size:14px">${esc(a.body)}</div>`:""}
-        <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div></div>`).join("")}
-      ${G.alerts.length>3?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="gpShowTab('alerts')">See all alerts</button>`:""}
-    </div>`:""}
-    ${gpRenderKnowGeneralCard()}
-    <div style="text-align:center;margin:32px 0 16px">
-      <button class="link-btn" onclick="if(confirm('Sign out of the guest portal?'))gpSignOut()" style="font-size:12px;color:var(--muted)">Sign out</button>
+  </div>
+  <div class="gp-count" id="gpCount"></div>
+  <div class="gp-pad">
+    <p class="gp-note">&ldquo;${esc(welcome)}&rdquo;</p>
+    <div class="gp-div">&#10087;</div>
+    <div class="gp-quick">
+      ${navTabs.map(t=>`<div class="gp-qcard" onclick="gpShowTab('${t.k}')"><div class="qi">${qIcon[t.k]||"✦"}</div><h4>${esc(t.label)}</h4><p>${esc(qDesc[t.k]||"")}</p></div>`).join("")}
     </div>
-  `;
-}
-
-function gpRenderKnowGeneralCard(){
-  const general = G.data?.plan_data?.know_before_general || "";
-  if(!general.trim()) return "";
-  return `<div class="gp-card"><h3>Things to know</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`;
+    ${next?`<div class="gp-div">&#10087;</div>
+      <div class="gp-h" style="font-size:22px">Up next</div><div class="gp-sub">Your next celebration</div>
+      <div class="gp-event">
+        <div class="gp-event-head"><div class="gp-ev-ic">${gpEventIcon(next.ev.name)}</div>
+          <div><div class="gp-event-title">${esc(next.ev.name||"Event")}</div><div class="gp-event-when">${esc(gpEventDateTime(next.ev))}</div></div></div>
+        <div class="gp-event-body">${(next.ev.venue&&!isVenueHiddenForGuests(next.ev))?`<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(next.ev.venue)}</span></div>`:""}
+          ${next.ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span class="gp-pill">${esc(next.ev.dress_code)}</span></div>`:""}</div>
+        <div class="gp-event-actions"><button class="gp-btn fill" onclick="gpShowTab('schedule')">View full schedule</button></div>
+      </div>`:""}
+    ${recentAlerts.length?`<div class="gp-div">&#10087;</div><div class="gp-h" style="font-size:22px">Latest updates</div><div class="gp-sub">From the couple</div>
+      ${recentAlerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}"><h4>${esc(a.title)}</h4>${a.body?`<div style="font-size:13.5px;color:var(--gp-muted);white-space:pre-wrap;margin-top:3px">${esc(a.body)}</div>`:""}<div class="when">${esc(new Date(a.created_at).toLocaleString())}</div></div>`).join("")}`:""}
+    <div class="gp-foot">Made with <span class="h">&#9825;</span> &middot; <button onclick="if(confirm('Sign out of the guest portal?'))gpSignOut()" style="font-size:11px;color:var(--gp-muted);background:none;border:0;cursor:pointer">Sign out</button></div>
+  </div>`;
 }
 
 function gpRenderSchedule(){
-  const list = gpUpcomingEvents();
-  if(!list.length) return `<div class="gp-empty"><div class="big">📅</div>No events scheduled yet.</div>`;
-  return list.map(({ev})=>{
+  const list=gpUpcomingEvents();
+  if(!list.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">📅</div>No events yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">The celebrations</div><div class="gp-sub">Everything, in order</div>`+
+   list.map(({ev})=>{
+    const hidden=isVenueHiddenForGuests(ev);
     return `<div class="gp-event">
-      <div class="gp-event-head">
-        <div class="gp-event-title">${esc(ev.name||"Event")}</div>
-        <div class="gp-event-when">${esc(gpEventDateTime(ev))}</div>
-      </div>
+      <div class="gp-event-head"><div class="gp-ev-ic">${gpEventIcon(ev.name)}</div>
+        <div><div class="gp-event-title">${esc(ev.name||"Event")}</div><div class="gp-event-when">${esc(gpEventDateTime(ev))}</div></div></div>
       <div class="gp-event-body">
-        ${(()=>{ const hidden = isVenueHiddenForGuests(ev); if(ev.venue && !hidden) return `<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`; if(hidden){ const revealMsg = "To be updated"; return `<div class="gp-row"><span class="k">Where</span><span class="muted">${revealMsg}</span></div>`; } return ""; })()}
-        ${ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span>${esc(ev.dress_code)}</span></div>`:""}
-        ${ev.know_before_notes?`<div class="gp-row" style="display:block"><div class="k">Know before you go</div><div style="white-space:pre-wrap;font-size:14px;margin-top:4px">${esc(ev.know_before_notes)}</div></div>`:""}
-        <div class="gp-event-actions">
-          ${(()=>{ const hidden = isVenueHiddenForGuests(ev); if(!hidden && ev.map_link) return `<a class="btn ghost" href="${esc(ev.map_link)}" target="_blank" rel="noopener">🗺 Directions</a>`; if(!hidden && ev.venue) return `<a class="btn ghost" href="https://maps.google.com/?q=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">🗺 Directions</a>`; return ""; })()}
-          <button class="btn ghost" onclick="gpDownloadIcs('${esc(ev.id||"")}')">📅 Add to calendar</button>
-        </div>
+        ${ev.venue&&!hidden?`<div class="gp-row"><span class="k">Where</span><span>📍 ${esc(ev.venue)}</span></div>`:(hidden?`<div class="gp-row"><span class="k">Where</span><span class="gp-pill">To be revealed</span></div>`:"")}
+        ${ev.dress_code?`<div class="gp-row"><span class="k">Dress code</span><span class="gp-pill">${esc(ev.dress_code)}</span></div>`:""}
+        ${ev.know_before_notes?`<div class="gp-row" style="display:block"><div class="k" style="margin-bottom:4px">Good to know</div><div style="white-space:pre-wrap">${esc(ev.know_before_notes)}</div></div>`:""}
+      </div>
+      <div class="gp-event-actions">
+        ${!hidden&&ev.map_link?`<a class="gp-btn" href="${esc(ev.map_link)}" target="_blank" rel="noopener">Directions</a>`:(!hidden&&ev.venue?`<a class="gp-btn" href="https://maps.google.com/?q=${encodeURIComponent(ev.venue)}" target="_blank" rel="noopener">Directions</a>`:"")}
+        <button class="gp-btn fill" onclick="gpDownloadIcs('${esc(ev.id||"")}')">Add to calendar</button>
       </div>
     </div>`;
-  }).join("");
+  }).join("")+`</div>`;
 }
 
 function gpRenderVenues(){
-  const venues = {};
-  G.events.forEach(ev=>{
-    if(isVenueHiddenForGuests(ev)) return;
-    const key = (ev.venue||"").trim(); if(!key) return;
-    if(!venues[key]) venues[key] = {name:key, map_link:ev.map_link||"", parking:ev.parking_notes||"", events:[]};
+  const venues={};
+  G.events.forEach(ev=>{ if(isVenueHiddenForGuests(ev))return; const key=(ev.venue||"").trim(); if(!key)return;
+    if(!venues[key]) venues[key]={name:key,map_link:ev.map_link||"",parking:ev.parking_notes||"",events:[]};
     venues[key].events.push(ev.name||"Event");
-    if(!venues[key].map_link && ev.map_link) venues[key].map_link = ev.map_link;
-    if(!venues[key].parking && ev.parking_notes) venues[key].parking = ev.parking_notes;
-  });
-  const list = Object.values(venues);
-  if(!list.length) return `<div class="gp-empty"><div class="big">📍</div>No venues yet.</div>`;
-  return list.map(v=>`<div class="gp-card"><h3>${esc(v.name)}</h3>
-    <div class="muted" style="font-size:13px;margin-bottom:8px">${v.events.map(esc).join(" · ")}</div>
-    ${v.parking?`<div style="font-size:14px;white-space:pre-wrap"><b>Parking:</b> ${esc(v.parking)}</div>`:""}
-    <div class="gp-event-actions" style="margin-top:10px">
-      <a class="btn ghost" href="${esc(v.map_link||("https://maps.google.com/?q="+encodeURIComponent(v.name)))}" target="_blank" rel="noopener">🗺 Open in Maps</a>
-      <a class="btn ghost" href="${esc("https://maps.apple.com/?q="+encodeURIComponent(v.name))}" target="_blank" rel="noopener">🍎 Apple Maps</a>
-    </div>
-  </div>`).join("");
+    if(!venues[key].map_link&&ev.map_link) venues[key].map_link=ev.map_link;
+    if(!venues[key].parking&&ev.parking_notes) venues[key].parking=ev.parking_notes; });
+  const list=Object.values(venues);
+  if(!list.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">📍</div>No venues yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">Venues</div><div class="gp-sub">Where the magic happens</div>`+
+    list.map(v=>`<div class="gp-card"><h3>${esc(v.name)}</h3>
+      <div class="gp-sub" style="margin:0 0 8px">${v.events.map(esc).join(" · ")}</div>
+      ${v.parking?`<div style="font-size:13.5px;white-space:pre-wrap"><b>Parking:</b> ${esc(v.parking)}</div>`:""}
+      <div class="gp-event-actions" style="padding:12px 0 0">
+        <a class="gp-btn" href="${esc(v.map_link||("https://maps.google.com/?q="+encodeURIComponent(v.name)))}" target="_blank" rel="noopener">Google Maps</a>
+        <a class="gp-btn" href="${esc("https://maps.apple.com/?q="+encodeURIComponent(v.name))}" target="_blank" rel="noopener">Apple Maps</a>
+      </div></div>`).join("")+`</div>`;
+}
+
+function gpRenderTravel(){
+  const t=(G.portal&&G.portal.travel)||{}; const hotels=t.hotels||[];
+  const hasGetting=(t.airport||"").trim()||(t.shuttle||"").trim()||(t.contact||"").trim();
+  if(!hotels.length&&!hasGetting) return `<div class="gp-pad"><div class="gp-empty"><div class="big">✈</div>Travel details coming soon.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">Travel &amp; stay</div><div class="gp-sub">Getting here and where to rest</div>
+    ${hotels.map(h=>`<div class="gp-hotel">${(h.photo||"").trim()?`<div class="ph" style="background-image:url('${esc(h.photo)}')"></div>`:`<div class="ph"></div>`}
+      <div class="in"><h4>${esc(h.name||"Hotel")}${h.tag?`<span class="gp-tag">${esc(h.tag)}</span>`:""}</h4>
+        ${h.rate?`<div class="gp-row"><span class="k">Rate</span><span><b>${esc(h.rate)}</b></span></div>`:""}
+        ${h.code?`<div class="gp-row"><span class="k">Booking code</span><span class="gp-pill">${esc(h.code)}</span></div>`:""}
+        ${h.note?`<div class="gp-row" style="display:block"><div style="white-space:pre-wrap;font-size:13.5px">${esc(h.note)}</div></div>`:""}
+        <div class="gp-event-actions" style="padding:12px 0 0">
+          ${h.map_link?`<a class="gp-btn" href="${esc(h.map_link)}" target="_blank" rel="noopener">Map</a>`:(h.name?`<a class="gp-btn" href="https://maps.google.com/?q=${encodeURIComponent(h.name)}" target="_blank" rel="noopener">Map</a>`:"")}
+          ${h.book_link?`<a class="gp-btn fill" href="${esc(h.book_link)}" target="_blank" rel="noopener">Book</a>`:""}
+        </div></div></div>`).join("")}
+    ${hasGetting?`<div class="gp-event"><div class="gp-event-head"><div class="gp-ev-ic">✈</div><div><div class="gp-event-title">Getting here</div></div></div>
+      <div class="gp-event-body">
+        ${(t.airport||"").trim()?`<div class="gp-row" style="display:block"><div class="k" style="margin-bottom:3px">Airport &amp; travel</div><div style="white-space:pre-wrap">${esc(t.airport)}</div></div>`:""}
+        ${(t.shuttle||"").trim()?`<div class="gp-row" style="display:block"><div class="k" style="margin-bottom:3px">Shuttle</div><div style="white-space:pre-wrap">${esc(t.shuttle)}</div></div>`:""}
+        ${(t.contact||"").trim()?`<div class="gp-row"><span class="k">Travel desk</span><span><b>${esc(t.contact)}</b></span></div>`:""}
+      </div></div>`:""}
+    </div>`;
+}
+
+function gpRenderFaq(){
+  const faq=(G.portal&&G.portal.faq)||[];
+  if(!faq.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">❔</div>No questions yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">Good to know</div><div class="gp-sub">Answers to common questions</div>
+    ${faq.map(x=>`<div class="gp-faq"><div class="q">${esc(x.q||"")}<i>⌄</i></div><div class="a">${esc(x.a||"")}</div></div>`).join("")}</div>`;
+}
+
+function gpRenderStory(){
+  const p=G.portal||{}; const story=(p.story||"").trim();
+  if(!story) return `<div class="gp-pad"><div class="gp-empty"><div class="big">❧</div>Our story is coming soon.</div></div>`;
+  const photo=(p.story_photo||"").trim();
+  return `<div class="gp-pad"><div class="gp-h">Our story</div><div class="gp-sub">How two became us</div>
+    <div class="gp-story-ph"${photo?` style="background-image:url('${esc(photo)}')"`:""}></div>
+    <div class="gp-story">${esc(story)}</div></div>`;
+}
+
+function gpRenderPhotos(){
+  return `<div class="gp-pad"><div class="gp-h">Shared album</div><div class="gp-sub">Every guest's view, in one place</div>
+    <div class="gp-album"><div class="ai">📷</div><h3>Coming soon</h3><p>A shared photo album where you'll be able to post pictures from the celebrations for everyone to enjoy.</p></div></div>`;
 }
 
 function gpRenderKnow(){
-  const general = G.data?.plan_data?.know_before_general || "";
-  const perEvent = G.events.filter(e => e.know_before_notes);
-  if(!general && !perEvent.length) return `<div class="gp-empty"><div class="big">ℹ️</div>The couple hasn't added notes yet.</div>`;
-  return `${general?`<div class="gp-card"><h3>General</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`:""}
-    ${perEvent.map(ev=>`<div class="gp-card"><h3>${esc(ev.name||"Event")}</h3>
-      <div style="white-space:pre-wrap;font-size:14px">${esc(ev.know_before_notes)}</div></div>`).join("")}`;
+  const general=G.data?.plan_data?.know_before_general||"";
+  const perEvent=G.events.filter(e=>e.know_before_notes);
+  if(!general&&!perEvent.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">ℹ️</div>Nothing here yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">Know before you go</div><div class="gp-sub">A few helpful notes</div>
+    ${general?`<div class="gp-card"><h3>General</h3><div style="white-space:pre-wrap;font-size:14px">${esc(general)}</div></div>`:""}
+    ${perEvent.map(ev=>`<div class="gp-card"><h3>${esc(ev.name||"Event")}</h3><div style="white-space:pre-wrap;font-size:14px">${esc(ev.know_before_notes)}</div></div>`).join("")}</div>`;
 }
 
 function gpRenderRsvp(){
-  if(!G.events.length) return `<div class="gp-empty"><div class="big">✉️</div>No events to RSVP for yet.</div>`;
-  return G.events.map(ev=>{
+  if(!G.events.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">✉️</div>No events to RSVP for yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">My RSVP</div><div class="gp-sub">Let them know for each celebration</div>`+
+   G.events.map(ev=>{
     const r = G.rsvpsByEvent[ev.id] || {};
     const yes = r.attending === true, no = r.attending === false;
     return `<div class="gp-card">
-      <h3>${esc(ev.name||"Event")}</h3>
-      <div class="muted" style="font-size:13px">${esc(gpEventDateTime(ev))}</div>
-      <div class="gp-rsvp" style="margin-top:10px">
-        <button class="yes${yes?' on':''}" onclick="gpRsvp('${esc(ev.id||"")}', true)">✓ Attending</button>
+      <h3 style="margin-bottom:2px">${esc(ev.name||"Event")}</h3>
+      <div class="gp-sub" style="margin-bottom:12px">${esc(gpEventDateTime(ev))}</div>
+      <div class="gp-rsvp">
+        <button class="yes${yes?' on':''}" onclick="gpRsvp('${esc(ev.id||"")}', true)">✓ Joyfully</button>
         <button class="no${no?' on':''}" onclick="gpRsvp('${esc(ev.id||"")}', false)">✗ Can't make it</button>
       </div>
-      ${yes?`<div style="margin-top:10px"><label class="muted" style="font-size:13px">Plus-ones (incl. partner & kids)</label>
-        <input type="number" min="0" max="10" value="${+(r.plus_ones||0)}" id="gpPO_${esc(ev.id||"")}" onchange="gpRsvpPO('${esc(ev.id||"")}', this.value)" style="width:80px;margin-left:8px;padding:6px;border:1px solid var(--line);border-radius:8px"></div>`:""}
+      ${yes?`<div style="margin-top:12px;display:flex;align-items:center;gap:8px"><label class="gp-sub" style="margin:0">Guests in your party</label>
+        <input type="number" min="0" max="10" value="${+(r.plus_ones||0)}" id="gpPO_${esc(ev.id||"")}" onchange="gpRsvpPO('${esc(ev.id||"")}', this.value)" style="width:72px;padding:7px;border:1px solid var(--gp-line);border-radius:10px"></div>`:""}
     </div>`;
-  }).join("");
+  }).join("")+`</div>`;
 }
 
 function gpRenderAlerts(){
-  if(!G.alerts.length) return `<div class="gp-empty"><div class="big">🔔</div>No alerts yet. The couple will post updates here.</div>`;
-  return G.alerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}">
-    <h4>${esc(a.title)}</h4>
-    ${a.body?`<div style="font-size:14px;white-space:pre-wrap">${esc(a.body)}</div>`:""}
+  if(!G.alerts.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">🔔</div>No announcements yet.</div></div>`;
+  return `<div class="gp-pad"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>`+
+   G.alerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}">
     <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div>
-  </div>`).join("");
+    <h4>${esc(a.title)}</h4>
+    ${a.body?`<div style="font-size:13.5px;color:var(--gp-muted);white-space:pre-wrap;margin-top:3px">${esc(a.body)}</div>`:""}
+  </div>`).join("")+`</div>`;
 }
 
 async function gpRsvp(eventId, attending){
