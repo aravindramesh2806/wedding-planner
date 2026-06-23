@@ -1887,7 +1887,7 @@ function hideCloudAuth(){ document.getElementById("cloudauth").classList.remove(
 // Vanity guest-login URL for THIS deployment. Setting a token here makes
 // `<site>/#guestlogin` resolve to that couple's guest portal. Leave empty
 // for multi-tenant deploys (other couples still use their own #g=<token>).
-const VANITY_GUEST_ENTRY = "1a42b68114d28f929e88e601";
+const VANITY_GUEST_ENTRY = "";
 
 function hashRoute(){
   const h=location.hash||""; let m;
@@ -1897,6 +1897,7 @@ function hashRoute(){
   if(m=h.match(/[#&]i=([a-f0-9]+)/i)) return {kind:"guest_invite", token:m[1]};
   if(m=h.match(/[#&]guestlogin-([a-z0-9-]+)/i)) return {kind:"guest_by_slug", slug:m[1]};
   if(/[#&]guestlogin\b/i.test(h) && VANITY_GUEST_ENTRY) return {kind:"guest", entry:VANITY_GUEST_ENTRY, vanity:true};
+  if(/[#&]guestlogin\b/i.test(h)) return {kind:"guest_no_token"};
   if(m=h.match(/[#&]g=([a-f0-9]+)/i)) return {kind:"guest", entry:m[1]};
   if(/[#&]g(?:=|$|&)/.test(h)) return {kind:"guest_no_token"};
   if(m=h.match(/[#&]w=([a-f0-9]+)/i)) return {kind:"couple", token:m[1]};
