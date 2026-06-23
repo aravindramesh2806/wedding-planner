@@ -396,21 +396,6 @@
       <div class="card"><div class="stat" id="dGuests">0</div><div class="stat-lab">Guests confirmed</div>
         <div class="stat-lab" id="dGuestsBreak" style="margin-top:6px"></div></div>
     </div>
-    <div class="card" id="dGuestLinkCard" style="margin-top:16px;display:none">
-      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:200px">
-          <h2 style="font-size:17px;margin-bottom:6px">&#128156; Guest invite link</h2>
-          <p class="muted" style="font-size:13px;margin:0">Share this with anyone you want at the wedding &mdash; they sign in, you approve.</p>
-        </div>
-        <div class="row" style="gap:6px">
-          <button class="btn ghost sm" onclick="dCopyGuestLink()" id="dGuestLinkCopyBtn">&#128203; Copy</button>
-          <button class="btn sm" onclick="dOpenGuestLink()">&#8599; Preview</button>
-        </div>
-      </div>
-      <div class="field" style="margin-top:10px">
-        <input type="text" id="dGuestLinkInput" readonly onclick="this.select()" style="font-family:ui-monospace,monospace;font-size:13px">
-      </div>
-    </div>
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card">
         <h2>Up next</h2>
@@ -2327,7 +2312,7 @@ function showLinkModal(){
 const GOOGLE_CLIENT_ID = "";
 
 let G = {
-  entry:null, guestId:null, guestToken:null, status:null,
+  entry:null, slug:null, guestId:null, guestToken:null, status:null,
   data:null, coupleName:"", events:[], rsvpsByEvent:{}, alerts:[],
   tab:"home", pollT:null
 };
@@ -2379,6 +2364,7 @@ async function guestBootViaInvite(token){
 }
 
 async function guestBootBySlug(slug){
+  G.slug = slug;
   try{
     const r = await rpc("wp_lookup_by_slug", {p_slug: slug});
     if(r && !r.error && r.guest_entry_token){
@@ -2795,6 +2781,17 @@ function gpUpcomingEvents(){
     .sort((a,b)=>(a.d?+a.d:0)-(b.d?+b.d:0));
 }
 
+function gpInviteUrl(){
+  const o=location.origin; const base=(o&&o!=="null")?o+location.pathname:"";
+  if(G.slug) return base+"#guestlogin-"+G.slug;
+  if(G.entry) return base+"#g="+G.entry;
+  return "";
+}
+function gpCopyInvite(btn){
+  const url=gpInviteUrl(); if(!url){ return; }
+  try{ navigator.clipboard&&navigator.clipboard.writeText(url); }catch(e){}
+  const o=btn.textContent; btn.textContent="✓ Copied"; setTimeout(()=>{btn.textContent=o;},1500);
+}
 function gpRenderHome(){
   const p=G.portal||{};
   const date=G.data?.couple?.wedding_date;
@@ -2835,6 +2832,12 @@ function gpRenderHome(){
       </div>`:""}
     ${recentAlerts.length?`<div class="gp-div">&#10087;</div><div class="gp-h" style="font-size:22px">Latest updates</div><div class="gp-sub">From the couple</div>
       ${recentAlerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}"><h4>${esc(a.title)}</h4>${a.body?`<div style="font-size:13.5px;color:var(--gp-muted);white-space:pre-wrap;margin-top:3px">${esc(a.body)}</div>`:""}<div class="when">${esc(new Date(a.created_at).toLocaleString())}</div></div>`).join("")}`:""}
+    ${gpInviteUrl()?`<div class="gp-div">&#10087;</div>
+      <div class="gp-h" style="font-size:22px">Invite others</div><div class="gp-sub">Share with anyone you'd love to have there</div>
+      <div class="gp-event">
+        <div class="gp-event-body"><div class="gp-row"><span style="font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all">${esc(gpInviteUrl())}</span></div></div>
+        <div class="gp-event-actions"><button class="gp-btn fill" onclick="gpCopyInvite(this)">&#128203; Copy invite link</button></div>
+      </div>`:""}
     <div class="gp-foot">Made with <span class="h">&#9825;</span> &middot; <button onclick="if(confirm('Sign out of the guest portal?'))gpSignOut()" style="font-size:11px;color:var(--gp-muted);background:none;border:0;cursor:pointer">Sign out</button></div>
   </div>`;
 }
