@@ -100,6 +100,37 @@ DEPLOY STEPS (not done yet):
   4. Verify live via guest portal + couple "Preview portal" button.
 Backup of pre-redesign index.html saved in outputs as index.backup-*.html.
 
+### Shipped 2026-06-23 — Guest portal redesign LIVE + hide_venue server-side fix
+- Deployed the guest portal redesign (premium fonts, live countdown, 6 GP_DESIGNS, Travel/FAQ/Our Story,
+  section show/hide). index.html pushed; supabase-guest-portal.sql re-run in Supabase.
+- SECURITY FIX: wp_guest_load now strips `venue` + `map_link` server-side for events whose venue is
+  hidden (mirrors client isVenueHiddenForGuests: hidden if hide_venue and reveal_at absent or future).
+  Hidden-event venue strings no longer leave the server. Verified valid Postgres + node --check on JS.
+- STILL TO VERIFY post-deploy: hidden-venue shows "To be revealed" for an approved test guest;
+  alerts round-trip; the 6 guest pages on mobile.
+- KNOWN MINOR: wp_admin_preview_portal still returns full blob, so couple Preview shows hidden venues
+  (not a leak; Preview just won't show the guest "To be revealed" state). Polish item.
+
+### Shipped 2026-06-23 (b) — Invite link moved to guest portal
+- Removed the "Guest invite link" card from the couple DASHBOARD; added an "Invite others" share card
+  to the GUEST PORTAL home (gpRenderHome) so approved guests can forward the couple-wide invite link.
+  New helpers gpInviteUrl()/gpCopyInvite(); G.slug now stored in guestBootBySlug. Couple-wide link
+  built from G.slug (#guestlogin-<slug>) or fallback G.entry (#g=<token>). Couple still approves signups.
+- Couple can still copy their invite link from the couple-side "Guest portal" admin tab (ppCopyLink).
+- Dead-but-harmless: dRenderGuestLink/dCopyGuestLink/dOpenGuestLink remain and no-op (elements removed).
+- index.html only (no SQL change). node --check passed.
+
+### Shipped 2026-06-23 (c) — Auto-updating PWA (no more stale cache)
+- Root cause of stale guest portals after deploy: sw.js was network-first but used the browser HTTP
+  cache, so deploys lagged until the tab/app fully closed.
+- New sw.js: HTML/JS navigations fetch with cache:'no-store' (always fresh); other assets stay
+  cache-first for offline; activate now deletes old-version caches.
+- index.html SW registration now uses {updateViaCache:'none'} and auto-reloads the page once on
+  'controllerchange' (when a new SW takes control) — clients self-update.
+- deploy.sh now copies sw.js AND auto-bumps `const CACHE='wp-<timestamp>'` on every deploy, so each
+  push forces the new SW to install/activate and clients refresh automatically. No manual version bump.
+- NOTE: sw.js now lives in the backup folder too (source of truth) and is in deploy.sh's copy list.
+
 ## PENDING FEATURES TO BUILD
 
 ### Priority order

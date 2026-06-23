@@ -3094,6 +3094,6 @@ applyTheme(S.settings.theme);
 })();
 setInterval(renderCountdown,3600000);
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(){});});var __wpReloading=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(__wpReloading)return;__wpReloading=true;location.reload();});}</script>
 </body>
 </html>
