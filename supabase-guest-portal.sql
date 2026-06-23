@@ -252,8 +252,24 @@ begin
   -- the guest-facing slices (schedule + "know before you go"). Budget, vendors,
   -- tasks, the full guest list and couple settings never leave the server.
   if g.status = 'approved' then
+    -- SECURITY: blank venue/map_link for events whose venue is hidden from guests
+    -- (mirrors client isVenueHiddenForGuests: hidden if hide_venue and reveal_at is
+    --  absent or still in the future). Never send the venue string for hidden events.
     plan_clean := json_build_object(
-      'events', coalesce(w.data->'events', '[]'::jsonb),
+      'events', coalesce((
+        select jsonb_agg(
+          case
+            when (e->>'hide_venue')::boolean is true
+                 and ( nullif(e->>'reveal_at','') is null
+                       or (e->>'reveal_at')::date > current_date )
+            then (e - 'venue' - 'map_link')
+            else e
+          end
+          order by ord
+        )
+        from jsonb_array_elements(coalesce(w.data->'events','[]'::jsonb))
+             with ordinality as t(e, ord)
+      ), '[]'::jsonb),
       'know_before_general', coalesce(w.data->>'know_before_general', ''),
       'portal', coalesce(w.data->'portal', '{}'::jsonb)
     );
