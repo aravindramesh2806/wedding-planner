@@ -234,7 +234,7 @@
   .gp-hero .bg{position:absolute;inset:0;background:linear-gradient(165deg,var(--gp-accent) 0%,var(--gp-dark) 68%,#3c262e 100%);background-size:cover;background-position:center}
   .gp-hero .bg.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(40,26,32,.66),rgba(40,26,32,.12) 60%)}
   .gp-hero .bg:not(.photo)::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 16%,rgba(255,255,255,.18),transparent 60%)}
-  .gp-hero .inner{position:relative;z-index:2;padding:64px 24px 34px}
+  .gp-hero .inner{position:relative;z-index:2;padding:64px 24px 58px}
   .gp-kick{font-size:11px;letter-spacing:4px;text-transform:uppercase;opacity:.92;margin-bottom:14px}
   .gp-names{font-family:var(--gp-serif);font-size:52px;line-height:1;font-weight:500;text-shadow:0 2px 18px rgba(0,0,0,.18)}
   .gp-names .amp{display:block;font-size:23px;font-style:italic;font-weight:400;margin:6px 0;opacity:.9}
@@ -324,6 +324,7 @@
     .gp-names{font-size:92px}
     .gp-names .amp{font-size:38px;margin:10px 0}
     .gp-when{font-size:15px;letter-spacing:3px;margin-top:26px}
+    .gp-hero .inner{padding-bottom:92px}
     .gp-sprig{font-size:24px;margin-top:24px}
     .gp-count{gap:16px;margin-top:-46px}
     .gp-cbox{width:98px;padding:18px 0;border-radius:20px}
@@ -576,7 +577,9 @@
             </select></div>
         </div>
         <div style="margin:-4px 0 10px"><button class="btn ghost sm" onclick="ppPortalSet('accent','')">Reset accent to preset</button></div>
-        <div class="field"><label class="fl">Cover photo URL (optional)</label><input type="text" id="ppCover" placeholder="https://… image for the hero banner" oninput="ppPortalSetDeb('cover',this.value)"></div>
+        <div class="field"><label class="fl">Cover photo (optional)</label>
+          <div style="display:flex;gap:8px;align-items:center"><input type="text" id="ppCover" placeholder="Paste an image URL…" oninput="ppPortalSetDeb('cover',this.value)" style="flex:1"><button class="btn ghost sm" title="Upload from your device" onclick="ppUploadImage('cover')" style="padding:9px 13px;white-space:nowrap">&#11014; Upload</button></div>
+          <div id="ppCoverThumb"></div></div>
         <div class="field"><label class="fl">Welcome message</label><textarea id="ppWelcome" rows="2" placeholder="A warm line guests see on the home screen." oninput="ppPortalSetDeb('welcome',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
       </div>
 
@@ -602,7 +605,9 @@
 
       <div class="card" id="ppStoryCard" style="margin-bottom:16px;display:none">
         <h3 style="margin:0 0 8px">Our story</h3>
-        <div class="field"><label class="fl">Story photo URL (optional)</label><input id="ppStoryPhoto" placeholder="https://… a photo of you two" oninput="ppPortalSetDeb('story_photo',this.value)"></div>
+        <div class="field"><label class="fl">Story photo (optional)</label>
+          <div style="display:flex;gap:8px;align-items:center"><input id="ppStoryPhoto" placeholder="Paste an image URL…" oninput="ppPortalSetDeb('story_photo',this.value)" style="flex:1"><button class="btn ghost sm" title="Upload from your device" onclick="ppUploadImage('story_photo')" style="padding:9px 13px;white-space:nowrap">&#11014; Upload</button></div>
+          <div id="ppStoryThumb"></div></div>
         <div class="field"><label class="fl">Your story</label><textarea id="ppStory" rows="5" placeholder="How you met, the proposal, a note to your guests…" oninput="ppPortalSetDeb('story',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea></div>
       </div>
 
@@ -1204,7 +1209,9 @@ function ppRenderHotels(){
     <div style="display:flex;gap:8px;margin-top:6px"><input placeholder="Map link" value="${esc(h.map_link||'')}" oninput="ppHotelField('${h.id}','map_link',this.value)" style="flex:1">
       <input placeholder="Book link" value="${esc(h.book_link||'')}" oninput="ppHotelField('${h.id}','book_link',this.value)" style="flex:1"></div>
     <textarea placeholder="Note (optional)" oninput="ppHotelField('${h.id}','note',this.value)" rows="1" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px">${esc(h.note||'')}</textarea>
-    <div style="text-align:right;margin-top:4px"><button class="btn ghost sm" onclick="ppDelHotel('${h.id}')">Remove</button></div>
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center"><input placeholder="Photo URL (optional)" value="${(h.photo||'').startsWith('data:')?'':esc(h.photo||'')}" oninput="ppHotelField('${h.id}','photo',this.value)" style="flex:1"><button class="btn ghost sm" title="Upload from your device" onclick="ppUploadHotelImage('${h.id}')" style="padding:9px 12px">&#11014;</button></div>
+    ${h.photo?`<div style="margin-top:6px;display:flex;align-items:center;gap:10px"><div style="width:90px;height:56px;border-radius:8px;background:#eee no-repeat center/cover;background-image:url('${esc(h.photo)}')"></div><button class="btn ghost sm" onclick="ppClearHotelImage('${h.id}')">Remove photo</button></div>`:""}
+    <div style="text-align:right;margin-top:6px"><button class="btn ghost sm" onclick="ppDelHotel('${h.id}')">Remove</button></div>
   </div>`).join(""):`<p class="muted" style="font-size:13px">No hotels yet.</p>`;
 }
 function ppRenderFaqs(){
@@ -1216,6 +1223,35 @@ function ppRenderFaqs(){
     <div style="text-align:right;margin-top:4px"><button class="btn ghost sm" onclick="ppDelFaq('${x.id}')">Remove</button></div>
   </div>`).join(""):`<p class="muted" style="font-size:13px">No questions yet.</p>`;
 }
+function ppCompressImage(file, cb){
+  const rd=new FileReader();
+  rd.onload=()=>{ const img=new Image(); img.onload=()=>{
+    const max=1500; let w=img.width, h=img.height;
+    if(w>max||h>max){ const r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    try{ cb(c.toDataURL('image/jpeg',0.82)); }catch(e){ cb(rd.result); }
+  }; img.onerror=()=>cb(rd.result); img.src=rd.result; };
+  rd.readAsDataURL(file);
+}
+function ppPickFile(cb){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=()=>{ const fl=inp.files&&inp.files[0]; if(!fl) return;
+    if(fl.size>12*1024*1024){ alert('That image is large; please pick one under ~12MB.'); return; }
+    ppCompressImage(fl, cb); };
+  inp.click();
+}
+function ppUploadImage(key){ ppPickFile(url=>{ ppPortal()[key]=url; save(); ppRenderPortalEditor(); }); }
+function ppClearImage(key){ ppPortal()[key]=''; save(); ppRenderPortalEditor(); }
+function ppUploadHotelImage(id){ ppPickFile(url=>{ const h=ppPortal().travel.hotels.find(x=>x.id===id); if(h){ h.photo=url; save(); ppRenderHotels(); } }); }
+function ppClearHotelImage(id){ const h=ppPortal().travel.hotels.find(x=>x.id===id); if(h){ h.photo=''; save(); ppRenderHotels(); } }
+function ppThumb(val, clearCall){
+  if(!val) return "";
+  return `<div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+    <div style="width:96px;height:60px;border-radius:8px;background:#eee no-repeat center/cover;background-image:url('${esc(val)}')"></div>
+    <button class="btn ghost sm" onclick="${clearCall}">Remove photo</button></div>`;
+}
+
 function ppRenderPortalEditor(){
   const sw=document.getElementById('ppDesignSwatches'); if(!sw) return;
   const p=ppPortal();
@@ -1227,7 +1263,8 @@ function ppRenderPortalEditor(){
   }).join("");
   const acc=document.getElementById('ppAccent'); if(acc) acc.value=p.accent||(GP_DESIGNS[p.design]||GP_DESIGNS.blush).accent;
   const fn=document.getElementById('ppFont'); if(fn) fn.value=p.font||"";
-  const cov=document.getElementById('ppCover'); if(cov && document.activeElement!==cov) cov.value=p.cover||"";
+  const cov=document.getElementById('ppCover'); if(cov && document.activeElement!==cov) cov.value=(p.cover||"").startsWith('data:')?"":(p.cover||"");
+  const covT=document.getElementById('ppCoverThumb'); if(covT) covT.innerHTML=ppThumb(p.cover,"ppClearImage('cover')");
   const wel=document.getElementById('ppWelcome'); if(wel && document.activeElement!==wel) wel.value=p.welcome||"";
   const secs=[["schedule","Schedule"],["venues","Venues"],["travel","Travel & stay"],["faq","FAQ"],["story","Our story"],["photos","Photos (coming soon)"]];
   document.getElementById('ppSectionToggles').innerHTML=secs.map(([k,l])=>
@@ -1240,7 +1277,8 @@ function ppRenderPortalEditor(){
   const ta=document.getElementById('ppTrAirport'); if(ta && document.activeElement!==ta) ta.value=tr.airport||"";
   const ts=document.getElementById('ppTrShuttle'); if(ts && document.activeElement!==ts) ts.value=tr.shuttle||"";
   const tc=document.getElementById('ppTrContact'); if(tc && document.activeElement!==tc) tc.value=tr.contact||"";
-  const sp=document.getElementById('ppStoryPhoto'); if(sp && document.activeElement!==sp) sp.value=p.story_photo||"";
+  const sp=document.getElementById('ppStoryPhoto'); if(sp && document.activeElement!==sp) sp.value=(p.story_photo||"").startsWith('data:')?"":(p.story_photo||"");
+  const spT=document.getElementById('ppStoryThumb'); if(spT) spT.innerHTML=ppThumb(p.story_photo,"ppClearImage('story_photo')");
   const stx=document.getElementById('ppStory'); if(stx && document.activeElement!==stx) stx.value=p.story||"";
   ppRenderHotels(); ppRenderFaqs();
 }
