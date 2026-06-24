@@ -486,6 +486,12 @@
           <option value="yes">Stay: Needs a room</option>
           <option value="no">Stay: No room needed</option>
         </select>
+        <select id="guestInviteFilter" onchange="renderGuests()" style="width:auto" title="Filter by invite sent">
+          <option value="">Invite: All</option>
+          <option value="not">Invite: Not sent</option>
+          <option value="yes">Invite: Sent</option>
+        </select>
+        <button class="btn ghost" onclick="copyAllInviteLinks()" title="Copy everyone's personal invite links">&#128279; Copy all links</button>
         <button class="btn ghost" onclick="exportGuestsCsv()" title="Download CSV">&#11015; CSV</button>
         <button class="btn ghost" onclick="printGuests()" title="Print">&#128424; Print</button>
       </div>
@@ -1007,6 +1013,9 @@ function renderGuests(){
   const stayF = document.getElementById("guestStayFilter")?.value || "";
   if(stayF==="yes") list=list.filter(g=>!!g.accommodation);
   else if(stayF==="no") list=list.filter(g=>!g.accommodation);
+  const invF = document.getElementById("guestInviteFilter")?.value || "";
+  if(invF==="not") list=list.filter(g=>!g.invited);
+  else if(invF==="yes") list=list.filter(g=>!!g.invited);
   const rsvpOrder={yes:0,maybe:1,pending:2,no:3};
   list.sort((a,b)=>{
     if(sort==="side"){ const d=(sideKeyword(a.side)||"zz").localeCompare(sideKeyword(b.side)||"zz"); if(d) return d; }
@@ -1139,6 +1148,21 @@ function setRsvp(id,v){ const g=S.guests.find(x=>x.id===id); g.rsvp=v; save(); r
 function sideKeyword(s){ s=(s||"").toLowerCase(); if(s.indexOf("both")>=0)return"both"; if(s.indexOf("groom")>=0)return"groom"; if(s.indexOf("bride")>=0)return"bride"; return""; }
 function setSide(id,v){ const g=S.guests.find(x=>x.id===id); if(g){ g.side=v; save(); renderAll(); } }
 function toggleInvite(id){ const g=S.guests.find(x=>x.id===id); g.invited=!g.invited; save(); renderAll(); }
+async function copyAllInviteLinks(){
+  if(!S.guests.length){ alert("No guests yet."); return; }
+  if(!CLOUD || !cloudToken){ alert("Connect to the cloud first so personal links can be generated."); return; }
+  const invF=document.getElementById("guestInviteFilter")?.value||"";
+  let targets=S.guests.slice();
+  if(invF==="not") targets=targets.filter(g=>!g.invited);
+  else if(invF==="yes") targets=targets.filter(g=>!!g.invited);
+  if(!targets.length){ alert("No guests match the current filter."); return; }
+  const missing=targets.filter(g=>!g.portal_token);
+  if(missing.length){ for(const g of missing){ await syncGuestToPortal(g); } }
+  const lines=targets.filter(g=>g.portal_token).map(g=>`${g.name}: ${guestInviteUrl(g)}`);
+  if(!lines.length){ alert("Links are still generating — try again in a moment."); return; }
+  try{ await navigator.clipboard.writeText(lines.join("\n")); }catch(e){}
+  alert(`Copied ${lines.length} personal invite link${lines.length>1?"s":""} to your clipboard — paste them anywhere to send.`);
+}
 function toggleStay(id){ const g=S.guests.find(x=>x.id===id); g.accommodation=!g.accommodation; save(); renderAll(); }
 function delGuest(id){ S.guests=S.guests.filter(x=>x.id!==id); save(); renderAll(); }
 
@@ -1529,13 +1553,14 @@ async function ppApprove(id, decision){
     if(decision==="approved"){
       // Send auto welcome alert to just this guest
       try{
-        await rpc("wp_admin_send_alert", {
+        const _wr = await rpc("wp_admin_send_alert", {
           p_couple_token: cloudToken,
           p_title: "Welcome to the wedding portal! 💕",
           p_body: "You're in. Tap around to see the schedule, venues, and what to expect.",
           p_audience: {type:"guests", guest_ids:[id]},
           p_kind: "welcome"
         });
+        if(_wr && _wr.alert_id) pushSendAlert(_wr.alert_id);
       }catch(e){}
     }
     await ppEnsureLoaded(true);
@@ -1628,8 +1653,9 @@ async function ppSendAlert(){
   const aud   = val("a_audience");
   const audience = aud==="all" ? {type:"all"} : {type:"event", event_id:aud};
   try{
-    await rpc("wp_admin_send_alert", {p_couple_token: cloudToken,
+    const _ar = await rpc("wp_admin_send_alert", {p_couple_token: cloudToken,
       p_title:title, p_body:body, p_audience:audience, p_kind:"manual"});
+    if(_ar && _ar.alert_id) pushSendAlert(_ar.alert_id);
     closeModal();
     await ppEnsureLoaded(true);
   }catch(e){ alert("Failed to send alert."); }
@@ -2089,6 +2115,17 @@ function myLink(){ const o=location.origin; const base=(o&&o!=="null")? o+locati
 function titleCase(s){ return s? s.charAt(0).toUpperCase()+s.slice(1) : ""; }
 function roleEmoji(role){ return role==="groom" ? "🤵" : "👰"; }
 async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args); if(error) throw error; return data; }
+// Fire-and-forget: ask the send-push Edge Function to deliver Web Push for an alert.
+async function pushSendAlert(alertId){
+  if(!alertId || !cloudToken) return;
+  try{
+    await fetch(SUPABASE_URL + "/functions/v1/send-push", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", apikey:SUPABASE_ANON_KEY, Authorization:"Bearer "+SUPABASE_ANON_KEY },
+      body: JSON.stringify({ couple_token: cloudToken, alert_id: alertId, site_url: location.origin+location.pathname })
+    });
+  }catch(e){ /* delivery is best-effort; in-app alerts still work */ }
+}
 
 function cloudPayload(){ return { tasks:S.tasks, budget:S.budget, events:S.events, guests:S.guests, vendors:S.vendors||[],
   know_before_general: S.know_before_general||"",
@@ -2310,6 +2347,7 @@ function showLinkModal(){
 // Get one at https://console.cloud.google.com/apis/credentials → OAuth 2.0 Client → Web app.
 // Add your site origin (e.g. https://aravindramesh2806.github.io) as an Authorized JS origin.
 const GOOGLE_CLIENT_ID = "";
+const VAPID_PUBLIC_KEY = ""; // Web Push public key — set after generating VAPID keys to enable guest alerts
 
 let G = {
   entry:null, slug:null, guestId:null, guestToken:null, status:null,
@@ -2636,6 +2674,7 @@ function guestEnterPortal(loaded){
   if(G.status !== "approved"){ gpRenderPending(); return; }
   gpRenderTabs();
   gpShowTab(G.tab || "home");
+  gpEnsurePush();
 }
 
 function gpRenderPending(){
@@ -2955,9 +2994,59 @@ function gpRenderRsvp(){
   }).join("")+`</div>`;
 }
 
+/* ---- Web Push (guest alerts) ---- */
+function gpUrlB64ToU8(str){
+  const pad="=".repeat((4 - str.length % 4) % 4);
+  const b=(str+pad).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(b), arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+function gpPushSupported(){ return !!VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+function gpIsIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent); }
+function gpIsStandalone(){ try{ return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true; }catch(e){ return false; } }
+async function gpSubscribeAndRegister(){
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:gpUrlB64ToU8(VAPID_PUBLIC_KEY)});
+  await rpc('wp_guest_register_push', {p_guest_token:G.guestToken, p_subscription:sub.toJSON()});
+  return sub;
+}
+async function gpEnsurePush(){
+  if(!gpPushSupported() || Notification.permission!=='granted' || !G.guestToken) return;
+  try{ await gpSubscribeAndRegister(); }catch(e){}
+}
+async function gpEnablePush(){
+  const note=document.getElementById('gpPushNote');
+  const setNote=(h)=>{ if(note) note.innerHTML=h; };
+  if(!gpPushSupported()){ setNote("Your browser doesn't support push alerts."); return; }
+  if(gpIsIOS() && !gpIsStandalone()){
+    setNote("On iPhone: tap the Share icon, then <b>Add to Home Screen</b>. Open the portal from your home screen and enable alerts there."); return;
+  }
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){ setNote("Notifications are blocked. Turn them on in your browser settings, then try again."); return; }
+    await gpSubscribeAndRegister();
+    gpShowTab('alerts');
+  }catch(e){ setNote("Couldn't turn on alerts — please try again."); }
+}
+function gpPushCardHtml(){
+  if(!gpPushSupported()) return "";
+  if(Notification.permission==='granted'){
+    return `<div class="gp-alert"><h4>&#128276; Alerts are on</h4><div style="font-size:13px;color:var(--gp-muted);margin-top:3px">You'll be notified when the couple posts an update.</div></div>`;
+  }
+  return `<div class="gp-event"><div class="gp-event-body">
+      <div class="gp-event-title" style="font-size:16px">&#128276; Turn on alerts</div>
+      <div style="font-size:13px;color:var(--gp-muted);margin-top:4px">Get a notification when the couple shares a schedule change or reminder.</div>
+      <div id="gpPushNote" style="font-size:12.5px;color:var(--gp-muted);margin-top:8px"></div>
+    </div>
+    <div class="gp-event-actions"><button class="gp-btn fill" onclick="gpEnablePush()">Enable notifications</button></div></div>`;
+}
+
 function gpRenderAlerts(){
-  if(!G.alerts.length) return `<div class="gp-pad"><div class="gp-empty"><div class="big">🔔</div>No announcements yet.</div></div>`;
-  return `<div class="gp-pad gp-grid"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>`+
+  const pushCard=gpPushCardHtml();
+  if(!G.alerts.length) return `<div class="gp-pad gp-grid"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>${pushCard}<div class="gp-empty"><div class="big">🔔</div>No announcements yet.</div></div>`;
+  return `<div class="gp-pad gp-grid"><div class="gp-h">Announcements</div><div class="gp-sub">Notes from the couple</div>${pushCard}`+
    G.alerts.map(a=>`<div class="gp-alert ${a.read?'':'unread'}">
     <div class="when">${esc(new Date(a.created_at).toLocaleString())}</div>
     <h4>${esc(a.title)}</h4>

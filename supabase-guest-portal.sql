@@ -543,6 +543,51 @@ end; $$;
 --  Grants — expose to anon (browser) like the existing wp_* funcs
 -- ============================================================
 
+-- ============================================================
+--  Web Push delivery (used by the send-push Edge Function; service_role only)
+-- ============================================================
+
+-- Targets for one alert: approved, opted-in guests whose audience matches.
+create or replace function public.wp_push_targets(p_couple_token text, p_alert_id uuid)
+returns json
+language plpgsql security definer set search_path = public as $$
+declare
+  w_id  uuid;
+  entry text;
+  a     public.guest_alerts%rowtype;
+  res   json;
+begin
+  select id, guest_entry_token into w_id, entry
+    from public.weddings where token = p_couple_token;
+  if w_id is null then return json_build_object('error','not_found'); end if;
+  select * into a from public.guest_alerts where id = p_alert_id and wedding_id = w_id;
+  if a.id is null then return json_build_object('error','alert_not_found'); end if;
+
+  select coalesce(json_agg(json_build_object(
+           'guest_id', g.id, 'subscription', g.push_subscription)), '[]'::json)
+    into res
+    from public.guests g
+   where g.wedding_id = w_id
+     and g.status = 'approved'
+     and g.push_subscription is not null
+     and public.wp_alert_matches_guest(a.audience, g.id);
+
+  return json_build_object('ok', true, 'title', a.title, 'body', a.body,
+                           'entry', entry, 'targets', res);
+end; $$;
+
+-- Null out a dead subscription (push endpoint returned 404/410).
+create or replace function public.wp_clear_push_subscription(p_guest_id uuid)
+returns json
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.guests set push_subscription = null where id = p_guest_id;
+  return json_build_object('ok', true);
+end; $$;
+
+grant execute on function public.wp_push_targets(text, uuid)        to service_role;
+grant execute on function public.wp_clear_push_subscription(uuid)   to service_role;
+
 grant execute on function public.wp_get_guest_entry_token(text)                                   to anon;
 grant execute on function public.wp_guest_signup(text, text, text, text, text, text)              to anon;
 grant execute on function public.wp_guest_load(text)                                              to anon;

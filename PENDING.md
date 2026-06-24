@@ -131,6 +131,27 @@ Backup of pre-redesign index.html saved in outputs as index.backup-*.html.
   push forces the new SW to install/activate and clients refresh automatically. No manual version bump.
 - NOTE: sw.js now lives in the backup folder too (source of truth) and is in deploy.sh's copy list.
 
+### Built 2026-06-23 (d) — Web Push alerts + bulk invite coverage (NOT yet deployed; needs setup)
+GUEST-ACQUISITION batch. All code done + verified (node --check, SQL parse, esbuild on the Edge Function).
+- **Web Push (lock-screen alerts)**: full pipeline.
+  - SQL (supabase-guest-portal.sql): new service-role RPCs wp_push_targets (approved+opted-in+audience-matched
+    subscriptions for an alert, returns title/body/entry/targets) and wp_clear_push_subscription (dead-sub cleanup).
+  - Edge Function supabase/functions/send-push/index.ts: signs Web Push with VAPID, sends to all targets,
+    clears 404/410 subs. Auth = couple token validated in the RPC.
+  - Client (index.html): VAPID_PUBLIC_KEY const (empty until set); guest opt-in card on Alerts tab
+    (gpEnablePush/gpEnsurePush/gpSubscribeAndRegister), iOS "Add to Home Screen" guidance; couple send flow
+    (both wp_admin_send_alert sites) now calls pushSendAlert() -> Edge Function fire-and-forget.
+  - sw.js: push + notificationclick handlers (deep-links into portal via #g=<entry>).
+  - SETUP REQUIRED before it works — see PUSH-SETUP.md: generate VAPID keys, paste public key into
+    VAPID_PUBLIC_KEY, `supabase functions deploy send-push --no-verify-jwt` with VAPID secrets, re-run SQL, deploy.
+  - iOS caveat: Web Push needs the guest to Add-to-Home-Screen first (Apple rule); app guides them.
+- **Bulk invite coverage** (index.html, couple Guests tab): new "Invite: All/Not sent/Sent" filter +
+  "Copy all links" button (copyAllInviteLinks) that syncs missing portal tokens and copies Name: link for
+  everyone (respects the filter) to paste/send in bulk. gSentBreak already shows sent vs to-send.
+
+DEPLOY ORDER: (1) VAPID keys + paste public key, (2) deploy Edge Function + secrets, (3) re-run SQL,
+(4) ./deploy.sh. Bulk-invite needs only step 4. Web Push needs all four.
+
 ## PENDING FEATURES TO BUILD
 
 ### Priority order
@@ -145,6 +166,16 @@ Backup of pre-redesign index.html saved in outputs as index.backup-*.html.
 3. **Customizable guest portal** (see below — bigger feature, can absorb the polish work)
 
 ### Suggestions to consider:
+- **Enable Google sign-in** *(deferred 2026-06-23)*: code is ready (GIS / google.accounts.id);
+  just blocked on an empty `GOOGLE_CLIENT_ID` (index.html ~line 2312). To enable:
+  Google Cloud Console -> new project -> OAuth consent screen (External, Publish so any guest can use)
+  -> Credentials -> OAuth client ID -> Web application -> Authorized JavaScript origin
+  `https://aravindramesh2806.github.io` (origin only, no path; no redirect URI needed) -> paste the
+  client ID into GOOGLE_CLIENT_ID -> deploy. Hardening TODO: callback decodes the Google JWT
+  client-side (gpParseJwt) and trusts email/sub WITHOUT server-side signature verification — low risk
+  since couple approves each signup, but verify the token in a Supabase RPC/edge function before
+  trusting it if going commercial.
+
 - **Customizable guest portal**: let the couple style their guest-facing portal —
   upload a cover photo / hero banner, set a custom welcome message, write a
   "Our story" section (how we met, our journey), add a photo gallery, pick
