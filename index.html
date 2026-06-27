@@ -3031,6 +3031,14 @@ async function gpEnablePush(){
   }catch(e){ setNote("Couldn't turn on alerts — please try again."); }
 }
 function gpPushCardHtml(){
+  if(!VAPID_PUBLIC_KEY) return "";
+  // iPhone Safari can't do Web Push until the portal is added to the Home Screen.
+  if(gpIsIOS() && !gpIsStandalone()){
+    return `<div class="gp-event"><div class="gp-event-body">
+        <div class="gp-event-title" style="font-size:16px">&#128276; Get wedding alerts</div>
+        <div style="font-size:13px;color:var(--gp-muted);margin-top:4px">On iPhone: tap the <b>Share</b> icon at the bottom of Safari, choose <b>Add to Home Screen</b>, then open the portal from that new icon &mdash; you'll be able to turn on alerts there.</div>
+      </div></div>`;
+  }
   if(!gpPushSupported()) return "";
   if(Notification.permission==='granted'){
     return `<div class="gp-alert"><h4>&#128276; Alerts are on</h4><div style="font-size:13px;color:var(--gp-muted);margin-top:3px">You'll be notified when the couple posts an update.</div></div>`;

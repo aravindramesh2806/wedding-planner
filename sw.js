@@ -3,7 +3,7 @@
 // Strategy: network-first. HTML/JS navigations bypass the browser HTTP cache so a fresh
 // deploy shows immediately; other assets use the HTTP cache and fall back to the SW cache
 // only when offline. On activate, stale caches from older versions are deleted.
-const CACHE = 'wp-20260627-125649';
+const CACHE = 'wp-20260627-130307';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 

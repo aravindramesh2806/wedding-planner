@@ -152,6 +152,17 @@ GUEST-ACQUISITION batch. All code done + verified (node --check, SQL parse, esbu
 DEPLOY ORDER: (1) VAPID keys + paste public key, (2) deploy Edge Function + secrets, (3) re-run SQL,
 (4) ./deploy.sh. Bulk-invite needs only step 4. Web Push needs all four.
 
+### Shipped 2026-06-23 (e) — Web Push LIVE
+- VAPID keys generated (public key in index.html VAPID_PUBLIC_KEY; private + contact set as Supabase
+  function secrets). send-push Edge Function deployed (supabase functions deploy send-push --no-verify-jwt).
+  wp_push_targets + wp_clear_push_subscription run in SQL editor. Front end deployed.
+- Verified end-to-end on backend: function returns 403 not_found for bogus couple_token (full chain OK:
+  function -> wp_push_targets -> service role -> token validation). Guest "Enable notifications" card renders.
+- REMAINING (manual, real device): grant notification permission on a phone + confirm a sent alert lands.
+  Browser permission can't be automated. iOS guests must Add-to-Home-Screen first.
+- Supabase CLI now installed locally (brew + supabase/tap). Future function deploys:
+  `supabase functions deploy send-push --no-verify-jwt`.
+
 ## PENDING FEATURES TO BUILD
 
 ### Priority order
